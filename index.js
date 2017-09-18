@@ -8,6 +8,15 @@ const PORT = 3000;
 
 const ROOT_PATH = '/Volumes/Hepheir/Database';
 
+// Supported Media Types
+const SUPPORTED_MEDIA_TYPES = {
+    'audio': ['mp3', 'ogg', 'wav'],
+    'video': ['mp4', 'webm', 'ogg'],
+    'text' : ['txt'],
+    'code' : ['c', 'cp', 'cpp', 'python', 'js']
+};
+
+
 const express = require('express')
     , fs = require('fs')
     , handlebars = require('handlebars')
@@ -24,18 +33,20 @@ app.use(express.static('ui'));
 app.get(/^(.*)$/, (req, res) => {
     let client = req.cookies.id;
 
+    var pageType;
+
     // If user is not logged in, send sign in page.
-    let isLogin = client;
+    var isLogin = client;
     if (!isLogin) {
-        renderPage('login');
+        pageType = 'login';
 
     } else {
-        let path = ROOT_PATH + req.params[0];
+        var path = ROOT_PATH + req.params[0];
 
         fs.stat(path, (err, stats) => {
             if (err) {
                 // If path does not exist, send error page.
-                renderPage('error');
+                pageType = 'error';
 
             } else {
                 // Check if user has valid access level.
@@ -43,16 +54,28 @@ app.get(/^(.*)$/, (req, res) => {
                     pathLevel = settings.getPathLevel(path);
 
                 if (clientLevel < pathLevel) {
-                    renderPage('login');
+                    pageType = 'login';
 
                 } else {                    
                     // Check whether requested path points a directory or a file.
                     if (stats.isDirectory()) {
-                        renderPage('directory');
+                        pageType = 'directory';
 
                     } else {
-                        renderPage('file');
-                        
+                        // If path points a file, check if requested file is supported media type.
+                        let extension = path.match(/[^\.]*$/)[0];
+                        console.log(extension);
+
+                        for (let mediaType in SUPPORTED_MEDIA_TYPES) {
+                            if (SUPPORTED_MEDIA_TYPES[mediaType].includes(extension)) {
+                                pageType = mediaType;
+                            }
+                        }
+
+                        if (!pageType) {
+                            pageType = 'file';
+                        }
+                       
                     }
 
                 }
@@ -60,11 +83,9 @@ app.get(/^(.*)$/, (req, res) => {
             }
         })
     }
-    
-    
-    function renderPage(pageType) {
-        res.send(pageType + '');
-    }
+
+    res.send();
+
     
 
     // let files = [
