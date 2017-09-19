@@ -27,7 +27,7 @@ settings.setRootDirectory(ROOT_PATH);
 
 const app = express();
 app.use(cookieParser());
-app.use(express.static('ui'));
+// app.use(express.static('ui'));
 
 // This function responses to all routes with get method.
 app.get(/^(.*)$/, (req, res) => {
@@ -79,14 +79,17 @@ app.get(/^(.*)$/, (req, res) => {
         if (isDirectory) {
             pagetype = 'directory';
 
+            handlebars.source.path = path;
             handlebars.source.files = [{file: '../'}];
 
             let files = fs.readdirSync(path);
-            files.map(f => handlebars.source.files.push(
-                {
-                    file: f
+            files.map(f => {
+                let isDir = fs.statSync(`${path}/${f}`).isDirectory();
+                if (isDir) {
+                    f = `${f}/`;
                 }
-            ));
+                handlebars.source.files.push({ file: f });
+            })
             reject();
         }
     })
@@ -106,7 +109,7 @@ app.get(/^(.*)$/, (req, res) => {
 
     })
 
-    console.log(path, pagetype, handlebars.source)
+    console.log(path, pagetype)
 
     let files = [
         fs.readFileSync('ui/header.partial.html'),
