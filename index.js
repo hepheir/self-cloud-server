@@ -215,6 +215,14 @@ app.get(/^(.*)$/, (req, res) => {
         }
     })
     .then((resolve, reject, extension) => {
+        // IMAGE
+        if (['jpg', 'jpeg', 'png', 'svg', 'gif'].includes(extension)) {
+            pagetype = 'image';
+            reject();
+        }
+        resolve(extension);
+    })
+    .then((resolve, reject, extension) => {
         // TEXT
         if ( 'text' in req.query || 'txt' == extension) {
 
