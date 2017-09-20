@@ -5,8 +5,143 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="mobile-web-app-capable" content="yes">
-	<title>title</title>
-    <!-- <link rel="stylesheet" href="/stat/layout.css"> -->
+	<title>{{title}}</title>
+	<!-- <link rel="stylesheet" href="/stat/layout.css"> -->
+	<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	color: rgba(0, 0, 0, .87);
+	text-decoration: none;
+}
+html, body {
+	width: 100%;
+	height: 100%;
+}
+
+ul.body-layout {
+	width: 100%;
+	height: 100%;
+
+	overflow-x: hidden;
+	overflow-y: auto;
+	display: block;
+
+	list-style: none;
+}
+
+ul.body-layout li {
+	width: 100%;
+	height: auto;
+
+	border-bottom: 1px solid #EFEFEF;
+}
+
+li.media {
+	flex-shrink: 0;
+	flex-grow: 0;
+
+	display: block;
+
+	background-color: rgb(64, 64, 64);
+}
+
+
+/* DIRECTORY */
+li.link {
+	padding: 12px 24px;
+
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+
+	background-color: rgba(255, 255, 255, 1);
+
+	transition: background-color .2s ease;
+}
+li.link:hover {
+	background-color: rgba(0, 0, 0, .1);
+}
+
+li.link label.icon {
+	width: 24px;
+	height: 24px;
+	margin-right: 24px;
+	
+	cursor: pointer;
+}
+li.link label.icon input {
+	width: 0;
+	height: 0;
+	opacity: 0;
+	position: fixed;
+}
+li.link label.icon svg {
+	fill: #777777;
+}
+li.link label.icon svg .selected,
+li.link label.icon svg .not-selected {
+	transition: opacity .1s ease;
+}
+li.link label.icon input:checked ~ svg .not-selected,
+li.link label.icon input ~ svg .selected {
+	opacity: 0;
+}
+li.link label.icon input:checked ~ svg .selected,
+li.link label.icon svg .not-selected {
+	opacity: 1;
+}
+
+
+li.link a {
+	width: 100%;
+	height: 24px;
+
+	display: block;
+
+	font-size: 16px;
+	line-height: 24px;
+}
+
+/* FILE */
+
+li.dialog {
+	padding: 16px 24px;
+
+	display: flex;
+	flex-direction: column;
+
+	align-items: center;
+}
+
+li.dialog svg {
+	width: 100%;
+	max-width: 240px;
+
+	fill: #BBDEFB;
+}
+
+li.dialog a {
+	color: #0D47A1;
+}
+
+/* TEXT */
+li.text {
+	width: 100%;
+	padding: 16px 8px;
+	overflow-x: auto;
+
+	white-space: pre-wrap;
+}
+
+audio, video {
+	width: 100%;
+}
+	</style>
+
 </head>
 
 <body>
+
+<ul class="body-layout">
