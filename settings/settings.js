@@ -17,8 +17,15 @@ module.exports.setRootDirectory = setRootDirectory;
 const fs = require('fs');
 
 // 0th element has the maximum level index.
-const MEMBERS = groupedDataObject(MEMBER_SETTING)
+var MEMBERS = groupedDataObject(MEMBER_SETTING)
     , PATHS = groupedDataObject(PATH_SETTING);
+
+// Update Level data on every minute.
+setInterval(() => {
+    MEMBERS = groupedDataObject(MEMBER_SETTING)
+    PATHS = groupedDataObject(PATH_SETTING);
+    console.log('update level data.');
+}, 60000);
 
 // This function will return a array of member lists grouped in levels.
 function groupedDataObject(path) {
@@ -52,6 +59,8 @@ function groupedDataObject(path) {
 }
 
 function getClientLevel(id) {
+    id = id.toString('utf-8');
+
     let maxlevel = MEMBERS[0];
     for (var lv = maxlevel; lv > 0; lv--) {
         let list = MEMBERS[lv];
@@ -67,6 +76,8 @@ function getClientLevel(id) {
 
 
 function getPathLevel(path) {
+    path = path.toString('utf-8');
+
     let maxlevel = PATHS[0],
         pathLevel = 0;
     for (var lv = maxlevel; lv > 0; lv--) {
@@ -77,7 +88,22 @@ function getPathLevel(path) {
 
         } else {
             list.map(elem => {
-                if (path.startsWith(`${ROOT_DIRECTORY}/${elem}`)) {
+                // A given path ends with '*' means all possible paths under the given path.
+                if (elem.includes('*')) {
+                    elem = elem.split('*')[0];
+
+                    console.log(
+                        path.startsWith(`${ROOT_DIRECTORY}/${elem}`),
+                        path.endsWith(elem),
+                        elem
+                    );
+
+                    if (path.startsWith(`${ROOT_DIRECTORY}/${elem}`)
+                    && !path.endsWith(`${ROOT_DIRECTORY}/${elem}`)) {
+                        pathLevel = lv;
+                    }
+
+                } else if (path.startsWith(`${ROOT_DIRECTORY}/${elem}`)) {
                     pathLevel = lv;
                 }
             })
