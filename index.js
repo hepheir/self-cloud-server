@@ -31,6 +31,9 @@ app.get(/^(.*)$/, (req, res) => {
         title: 'Hepheir-Self-Cloud-Server'
     };
 
+    // for history log
+    req.pathLevel = 0;
+
     new Chain()
     .then((resolve, reject) => {
         // Check if user wants to login/logout.
@@ -74,6 +77,7 @@ app.get(/^(.*)$/, (req, res) => {
 
         }
         pathLevel = settings.getPathLevel(path);
+        req.pathLevel = pathLevel;
 
         if (clientLevel < pathLevel) {
             handlebars.source.message = 'ACCESS DENIED!';
@@ -105,7 +109,7 @@ app.get(/^(.*)$/, (req, res) => {
                 
                 let isDirectory = false;
                 try {
-                    isDirectory = fs.statSync(`${path}${f}`).isDirectory();
+                    isDirectory = fs.statSync(`${path}/${f}`).isDirectory();
 
                 } catch(err) {
                     log.create(err.toString('utf-8'));
@@ -225,7 +229,7 @@ app.get(/^(.*)$/, (req, res) => {
 
 
     // create a log.
-    let logMessage = `${req.ip} <${req.cookies.id}> ['${path}'] (${pagetype})`;
+    let logMessage = `${req.ip} <${req.cookies.id}> ['${path}'] (${req.pathLevel}, ${pagetype})`;
     log.create(logMessage);
 
     // 6. If user requested 'download' or 'streaming' mode,
