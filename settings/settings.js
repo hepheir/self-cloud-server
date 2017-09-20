@@ -67,7 +67,7 @@ function getClientLevel(id) {
         if (!list) {
             continue;
 
-        } else if (list.includes(id)) {
+        } else if (list.includes(id) || list.includes('*')) {
             return lv;
         }
     }
@@ -91,12 +91,6 @@ function getPathLevel(path) {
                 // A given path ends with '*' means all possible paths under the given path.
                 if (elem.includes('*')) {
                     elem = elem.split('*')[0];
-
-                    console.log(
-                        path.startsWith(`${ROOT_DIRECTORY}/${elem}`),
-                        path.endsWith(elem),
-                        elem
-                    );
 
                     if (path.startsWith(`${ROOT_DIRECTORY}/${elem}`)
                     && !path.endsWith(`${ROOT_DIRECTORY}/${elem}`)) {
