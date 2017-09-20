@@ -1,115 +1,225 @@
 'use strict';
 
-function debug() {
-    console.log(arguments);
-}
-
 const PORT = 3000;
 
-const ROOT_PATH = '..';
-
-// Supported Media Types
-const SUPPORTED_MEDIA_TYPES = {
-    'audio': ['mp3', 'ogg', 'wav'],
-    'video': ['mp4', 'webm', 'ogg'],
-    'text' : ['txt'],
-    'code' : ['c', 'cp', 'cpp', 'python', 'js']
-};
+const ROOT_PATH = '/Volumes/Hepheir/Database';
 
 
-const express = require('express')
-    , fs = require('fs')
-    , handlebars = require('handlebars')
-    , cookieParser = require('cookie-parser');
+const log = logHandler();
 
 const settings = require('./settings/settings.js');
 settings.setRootDirectory(ROOT_PATH);
 
+
+// ################################### //
+const express = require('express')
+, fs = require('fs')
+, handlebars = require('handlebars')
+, cookieParser = require('cookie-parser');
+
 const app = express();
 app.use(cookieParser());
-// app.use(express.static('ui'));
 
-// This function responses to all routes with get method.
 app.get(/^(.*)$/, (req, res) => {
     let path = ROOT_PATH + req.params[0],
         pagetype;
 
-    handlebars.source = {};
+    handlebars.source = {
+        title: 'Hepheir-Self-Cloud-Server'
+    };
 
     new Chain()
     .then((resolve, reject) => {
-        // If user is not logged in, send sign in page.
-        let isLogin = true;
-        if (!isLogin) {
-            pagetype = 'login';
+        // Check if user wants to logout.
+        if ('logout' in req.query) {
+            pagetype = 'logout';
             reject();
+
         }
     })
     .then((resolve, reject) => {
-        // If path does not exist, send error page.
-        let stats;
+        // 1. Check path exists.
+        let stat;
         try {
-            stats = fs.statSync(path);
+            stat = fs.statSync(path);
 
         } catch (err) {
-            console.log(err);
             pagetype = 'error'
             reject();
 
             return;
         }
-        resolve(stats);
+        resolve(stat);
 
     })
-    .then((resolve, reject, stats) => {
-        // Check if user has valid access level.
-        let clientLevel = settings.getClientLevel(req.cookies.id),
-            pathLevel = settings.getPathLevel(path);
+    .then((resolve, reject, stat) => {
+        // 2. Check user has valid access level.
+        let clientLevel, pathLevel;
+
+        let isLogin = req.cookies.id;
+        if (isLogin) {
+            clientLevel = settings.getClientLevel(req.cookies.id)
+
+        } else {
+            clientLevel = 0;
+
+        }
+        pathLevel = settings.getPathLevel(path);
 
         if (clientLevel < pathLevel) {
             pagetype = 'login';
             reject();
+
         } else {
-            resolve(stats);
+            resolve(stat);
+            
         }
     })
-    .then((resolve, reject, stats) => {
-        // Check whether requested path points a directory or a file.
-        let isDirectory = stats.isDirectory();
+    .then((resolve, reject, stat) => {
+        // 3. Identify requested path is a directory.
+        let isDirectory = stat.isDirectory();
         if (isDirectory) {
             pagetype = 'directory';
 
             handlebars.source.path = path;
-            handlebars.source.files = [{file: '../'}];
+            handlebars.source.files = new Array();
 
             let files = fs.readdirSync(path);
             files.map(f => {
-                let isDir = fs.statSync(`${path}/${f}`).isDirectory();
-                if (isDir) {
-                    f = `${f}/`;
+                let source = {
+                    file: f,
+                    isDir: false
+                };
+                
+                let isDirectory = false;
+                try {
+                    isDirectory = fs.statSync(`${path}${f}`).isDirectory();
+
+                } catch(err) {
+                    log.create(err.toString('utf-8'));
+                    return;
+
                 }
-                handlebars.source.files.push({ file: f });
+
+                if (isDirectory) {
+                    source.file += '/';
+                    source.isDir = true;
+                }
+
+                handlebars.source.files.push(source);
             })
             reject();
         }
     })
-    .then((resolve, reject) => {
-        // If path points a file, check if requested file is supported media type.
-        let extension = path.match(/[^\.]*$/)[0];
+    .then((resolve, reject, stat) => {
+        // ### Handler for 'download' and 'streaming' mode. ###
+        if ('download' in req.query) {
+            let content = fs.readFileSync(path);
+            res.send(content);
 
-        for (let mediaType in SUPPORTED_MEDIA_TYPES) {
-            if (SUPPORTED_MEDIA_TYPES[mediaType].includes(extension)) {
-                pagetype = mediaType;
-                reject();
+            reject();
+            return;
+        }
+        else if ('streaming' in req.query) {
+            const fileSize = stat.size;
+            const range = req.headers.range;
+
+            if (range) {
+                const parts = range.replace(/bytes=/, "").split("-");
+                const start = parseInt(parts[0], 10);
+                const end = parts[1] 
+                    ? parseInt(parts[1], 10)
+                    : fileSize-1;
+                const chunksize = (end-start)+1
+                const file = fs.createReadStream(path, {start, end})
+                const head = {
+                    'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                    'Accept-Ranges': 'bytes',
+                    'Content-Length': chunksize,
+                    'Content-Type': 'video/mp4',
+                }
+                res.writeHead(206, head);
+                file.pipe(res);
+            } else {
+                const head = {
+                    'Content-Length': fileSize,
+                    'Content-Type': 'video/mp4',
+                }
+                res.writeHead(200, head)
+                fs.createReadStream(path).pipe(res)
             }
+            pagetype = undefined;
+            reject();
+            return;
+        }
+
+        resolve(stat);
+
+    })
+    // 4. Check is requested file a supported media type.
+    .then((resolve, reject) => {
+        let extension = path.match(/[^\/]*$/)[0].includes('.')
+            ? path.match(/([^\.])*$/)[0].toLowerCase()
+            : '(확장자가 없습니다)';
+        
+        handlebars.source.file = path.match(/[^\/]*$/)[0];
+
+        resolve(extension);
+    })
+    .then((resolve, reject, extension) => {
+        // AUDIO
+        if (['mp3', 'ogg', 'wav'].includes(extension)) {
+            if ('mp3' == extension) {
+                handlebars.source.type = 'mpeg';
+
+            } else {
+                handlebars.source.type = extension;
+
+            }
+            
+            pagetype = 'audio';
+            reject();
+
+        } else {
+            resolve(extension);
         }
     })
-    .then((resolve, reject) => {
-        pagetype = 'file';
+    .then((resolve, reject, extension) => {
+        // VIDEO
+        if (['mp4', 'webm', 'ogv'].includes(extension)) {
+            handlebars.source.type = extension;
 
+            pagetype = 'video';
+            reject();
+        }
+    })
+    .then((resolve, reject, extension) => {
+        // TEXT
+        if ( 'text' in req.query || 'text' == extension) {
+
+            handlebars.source.text = fs.readFileSync(path).toString('utf-8');
+
+            pagetype = 'text';
+            reject();
+        }
+        resolve(extension);
+    })
+    // File seems to be not supported.
+    .then((resolve, reject, extension) => {
+        pagetype = 'file';
+        handlebars.source.extension = extension;
     })
 
-    console.log(path, pagetype)
+
+    // create a log.
+    let logMessage = `${req.ip} <${req.cookies.id}> ['${path}'] (${pagetype})`;
+    log.create(logMessage);
+
+    // 6. If user requested 'download' or 'streaming' mode,
+    //    server doesnt have to render html page. ESCAPE!!!
+    if (pagetype == undefined) {
+        return;
+    }
 
     let files = [
         fs.readFileSync('ui/header.partial.html'),
@@ -128,8 +238,30 @@ app.get(/^(.*)$/, (req, res) => {
 })
 
 app.listen(PORT, () => {
-    console.log(`Self-cloud-server listening on port ${PORT}!`);
+    log.create(`Self-cloud-server listening on port ${PORT}!`);
 })
+
+function logHandler() {
+    let d = new Date(),
+        lastestLog;
+    return {
+        create: (msg) => {
+            let history = fs.readFileSync('log.txt');
+
+            let newLog;
+            if (lastestLog == msg) {
+                newLog = '*';
+
+            } else {
+                lastestLog = msg;
+                console.log(msg);
+
+                newLog = `\n${d.toLocaleString()}: ${msg} `;
+            }    
+            fs.writeFileSync('log.txt', history + newLog);
+        }
+    }
+}
 
 
 class Chain {
