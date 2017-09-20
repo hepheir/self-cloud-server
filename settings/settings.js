@@ -88,6 +88,11 @@ function getPathLevel(path) {
 
         } else {
             list.map(elem => {
+                // We only need highest level.
+                if (lv < pathLevel) {
+                    return;
+                }
+
                 // A given path ends with '*' means all possible paths under the given path.
                 if (elem.includes('*')) {
                     elem = elem.split('*')[0];
