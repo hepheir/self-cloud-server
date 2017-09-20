@@ -80,7 +80,9 @@ function getPathLevel(path) {
 
     let maxlevel = PATHS[0],
         pathLevel = 0;
-    for (var lv = maxlevel; lv > 0; lv--) {
+    
+    // We only need highest level.
+    for (var lv = maxlevel; lv > pathLevel; lv--) {
         
         let list = PATHS[lv];
         if (!list) {
@@ -88,11 +90,6 @@ function getPathLevel(path) {
 
         } else {
             list.map(elem => {
-                // We only need highest level.
-                if (lv < pathLevel) {
-                    return;
-                }
-
                 // A given path ends with '*' means all possible paths under the given path.
                 if (elem.includes('*')) {
                     elem = elem.split('*')[0];
