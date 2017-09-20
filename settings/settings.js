@@ -19,7 +19,7 @@ const fs = require('fs');
 // 0th element has the maximum level index.
 var MEMBERS = groupedDataObject(MEMBER_SETTING)
     , PATHS = groupedDataObject(PATH_SETTING);
-    
+
 
 // Update Level data on every minute.
 setInterval(() => {
@@ -78,7 +78,7 @@ function getClientLevel(id) {
 
 
 function getPathLevel(path) {
-    path = path.toString('utf-8');
+    path = path.replace(/\/$/, '');
 
     let maxlevel = PATHS[0],
         pathLevel = 0;
@@ -92,6 +92,8 @@ function getPathLevel(path) {
 
         } else {
             list.map(elem => {
+                elem = elem.replace(/\/$/, '');
+
                 // A given path ends with '*' means all possible paths under the given path.
                 if (elem.includes('*')) {
                     elem = elem.split('*')[0];
