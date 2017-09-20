@@ -21,13 +21,6 @@ var MEMBERS = groupedDataObject(MEMBER_SETTING)
     , PATHS = groupedDataObject(PATH_SETTING);
 
 
-// Update Level data on every minute.
-setInterval(() => {
-    MEMBERS = groupedDataObject(MEMBER_SETTING)
-    PATHS = groupedDataObject(PATH_SETTING);
-    console.log('update level data.');
-}, 60000);
-
 // This function will return a array of member lists grouped in levels.
 function groupedDataObject(path) {
     let dataObject = new Array();

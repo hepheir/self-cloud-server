@@ -32,7 +32,8 @@ app.get(/^(.*)$/, (req, res) => {
     };
 
     // for history log
-    req.pathLevel = 0;
+    req.pathLevel = undefined;
+    req.clientLevel = undefined;
 
     new Chain()
     .then((resolve, reject) => {
@@ -77,7 +78,9 @@ app.get(/^(.*)$/, (req, res) => {
 
         }
         pathLevel = settings.getPathLevel(path);
+
         req.pathLevel = pathLevel;
+        req.clientLevel = clientLevel;
 
         if (clientLevel < pathLevel) {
             handlebars.source.message = 'ACCESS DENIED!';
@@ -229,7 +232,7 @@ app.get(/^(.*)$/, (req, res) => {
 
 
     // create a log.
-    let logMessage = `${req.ip} <${req.cookies.id}> ['${path}'] (${req.pathLevel}, ${pagetype})`;
+    let logMessage = `${req.ip} <${req.cookies.id}>{${req.clientLevel}} ['${path}']{${req.pathLevel}} (${pagetype})`;
     log.create(logMessage);
 
     // 6. If user requested 'download' or 'streaming' mode,
