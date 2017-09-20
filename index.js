@@ -2,7 +2,9 @@
 
 const PORT = 3000;
 
-const ROOT_PATH = '/Volumes/Hepheir/Database';
+// Mac: '/Volumes/Hepheir/Database'
+// Win: 'G:/Database'
+const ROOT_PATH = 'G:/Database';
 
 
 const log = logHandler();
@@ -20,6 +22,7 @@ const express = require('express')
 const app = express();
 app.use(cookieParser());
 
+
 app.get(/^(.*)$/, (req, res) => {
     let path = ROOT_PATH + req.params[0],
         pagetype;
@@ -30,8 +33,14 @@ app.get(/^(.*)$/, (req, res) => {
 
     new Chain()
     .then((resolve, reject) => {
-        // Check if user wants to logout.
-        if ('logout' in req.query) {
+        // Check if user wants to login/logout.
+        if ('login' in req.query) {
+            handlebars.source.primaryTitle = '로그인 페이지';
+            handlebars.source.secondaryTitle = '로그인 버튼을 눌러서 로그인 해주세요';
+            pagetype = 'login';
+            reject();
+
+        } else if ('logout' in req.query) {
             pagetype = 'logout';
             reject();
 
@@ -67,6 +76,8 @@ app.get(/^(.*)$/, (req, res) => {
         pathLevel = settings.getPathLevel(path);
 
         if (clientLevel < pathLevel) {
+            handlebars.source.message = 'ACCESS DENIED!';
+            handlebars.source.secondaryTitle = '이 자료에 접근권한을 가진 계정으로 로그인 해주세요!';
             pagetype = 'login';
             reject();
 
