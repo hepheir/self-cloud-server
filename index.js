@@ -122,6 +122,7 @@ app.get(/^(.*)$/, (req, res) => {
 
                 if (isDirectory) {
                     source.file += '/';
+                    source.link += '/';
                     source.isDir = true;
                 }
 
