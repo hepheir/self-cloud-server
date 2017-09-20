@@ -19,6 +19,7 @@ const fs = require('fs');
 // 0th element has the maximum level index.
 var MEMBERS = groupedDataObject(MEMBER_SETTING)
     , PATHS = groupedDataObject(PATH_SETTING);
+    
 
 // Update Level data on every minute.
 setInterval(() => {
@@ -39,6 +40,7 @@ function groupedDataObject(path) {
 
         let list = fs.readFileSync(`${path}/${f}`)
                         .toString('utf-8')
+                        .replace(/[\n]+/g, '')
                         .replace(/;[\s+]/g, ';')
                         .split(';');
                         
