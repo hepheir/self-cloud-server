@@ -99,6 +99,7 @@ app.get(/^(.*)$/, (req, res) => {
             files.map(f => {
                 let source = {
                     file: f,
+                    link: f.replace(/#/g, '%23'),
                     isDir: false
                 };
                 
@@ -174,6 +175,7 @@ app.get(/^(.*)$/, (req, res) => {
             : '(확장자가 없습니다)';
         
         handlebars.source.file = path.match(/[^\/]*$/)[0];
+        handlebars.source.link = path.match(/[^\/]*$/)[0].replace(/#/g, '%23');
 
         resolve(extension);
     })
@@ -206,7 +208,7 @@ app.get(/^(.*)$/, (req, res) => {
     })
     .then((resolve, reject, extension) => {
         // TEXT
-        if ( 'text' in req.query || 'text' == extension) {
+        if ( 'text' in req.query || 'txt' == extension) {
 
             handlebars.source.text = fs.readFileSync(path).toString('utf-8');
 
@@ -231,6 +233,7 @@ app.get(/^(.*)$/, (req, res) => {
     if (pagetype == undefined) {
         return;
     }
+
 
     let files = [
         fs.readFileSync('ui/header.partial.html'),
