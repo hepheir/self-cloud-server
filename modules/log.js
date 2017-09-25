@@ -1,9 +1,10 @@
 'use strict';
 
-const LOG = 'log.txt';
+const LOG_PATH = 'log.txt';
 
 
 const fs = require('fs')
+    , fsp = require('./fsp.js')
     , date = new Date();
 
 
@@ -12,7 +13,9 @@ const fs = require('fs')
 module.exports.create = _create();
 
 // Log file is created if it does not exist. //
-fs.openSync(LOG, 'a+');
+if (!fs.existsSync(LOG_PATH)) {
+    fsp.createFileSync(LOG_PATH);
+}
 
 
 
@@ -21,7 +24,7 @@ function _create() {
     var lastestLog;
 
     return (msg) => {
-        fs.readFile(LOG, 'utf8', (err, history) => {
+        fs.readFile(LOG_PATH, 'utf8', (err, history) => {
             
             let newLog;
             if (lastestLog === msg) {
@@ -35,7 +38,7 @@ function _create() {
                 lastestLog = newLog;
                 console.log(msg);
             }
-            fs.writeFileSync(LOG, history + newLog);
+            fs.writeFileSync(LOG_PATH, history + newLog);
         })
     }
 }

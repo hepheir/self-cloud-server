@@ -3,11 +3,14 @@
 const HOSTNAME = 'localhost'
     , PORT = 3000;
 
-const ROOT_DIR = 'G:/Database';
+// Mac: '/Volumes/Hepheir/Database'
+// Win: 'G:/Database'
+const ROOT_DIR = './ex_directory/';
 
 
 // ################################### //
-const log = require('./modules/log.js');
+const log = require('./modules/log.js')
+    , fsp = require('./modules/fsp.js');
 
 // ################################### //
 const express = require('express')
