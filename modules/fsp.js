@@ -38,9 +38,9 @@ function _constructor() {
         }
     }
     
-    return null;
+    return new Object();
 }
 
 function _createFileSync(path) {
-    fs.closeSync(fs.openSync(LOG_PATH, 'w'));
+    fs.closeSync(fs.openSync(path, 'w'));
 }
