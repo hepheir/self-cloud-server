@@ -21,7 +21,7 @@ const express = require('express')
 
 const app = express();
 app.use(cookieParser());
-app.use(express.static('app'));
+app.use(express.static('frontend/app'));
 
 handlebars.registerHelper('ifNotEq', function (a, b, opts) {
     if (a !== b) {
@@ -36,98 +36,47 @@ handlebars.registerHelper('ifEq', function (a, b, opts) {
 
 // ################################### //
 /* drive */
-let driveSection = /^([^/]*)\/drive\/(.*)$/;
-app.get(driveSection, (req, res) => {
-    // For building Front end
-    let source = {
+let driveSection = /^\/drive(\/[^/]*)*$/;
+app.all(driveSection, (req, res) => {
+    var path = ROOT_PATH + decodeURIComponent(req.path.replace('/drive/', ''));
 
-    };
-    res.send(renderPage('drive', source));
-    return;
-
-    // Original
-    let path = ROOT_PATH + req.params[1];
-    req.source = new Object();
-
-    log.create(`<${req.ip}> access to [${path}]`);
+    console.log(path);
 
     if (!fs.existsSync(path)) {
-        res.send(renderPage('error', req.source));
+        res.send(renderPage('error', undefined));
         return;
     }
 
-    req.source.parent = path.match(/([^/]+)\/([^/]+)(\/$|$)/)[0].split('/')[0];
-    req.source.current = path.match(/([^/]+)(\/$|$)/)[0].split('/')[0];
+    // Level ACCESS
+    req.type = fileType(path);
 
-    let isDirectory = fs.statSync(path).isDirectory();
-    if (isDirectory) {
-        req.type = 'directory';
+    if (req.type != 'folder') {
+        res.send(renderPage('file', undefined));
+        return;
+    }
 
-        let files;
-        
-        files = fs.readdirSync(path);
-        files = files.map(file => {
+    if ('json' in req.query) {
+        let files = fs.readdirSync(path);
+        files = files.map(f => {
             return {
-                name: file,
-                type: fileType(`${path}/${file}`),
-                owner: '',
-                level: 0
-            }
+                name: f,
+                type: fileType(path + f),
+                secured: false
+            };
         })
-        // Sort directories to top.
-        files.sort((a, b) => {return a.type !== 'directory'})
-
-        req.source.files = files;
-    } else {
-        req.type = fileType(path);
-
-        let file = {
-            name: '',
-            type: req.type
-        }
+    
+        files = JSON.stringify(files);
+        res.setHeader('Access-Control-Allow-Headers', '*');
+        res.send(files);
+        return;
     }
 
-    let content = renderPage(req.type, req.source);
-    res.send(content);
-})
-
-/* login */
-let loginSection = /^([^/]*)\/login\/(.*)$/;
-app.get(loginSection, (req, res) => {
-    let path = req.params[1];
-
-    let handlebars_source = {
-        path: path
-    }
-
-
-    res.send(content);
-})
-
-
-/* download */
-let downloadSection = /^([^/]*)\/download\/(.*)$/;
-app.get(downloadSection, (req, res) => {
-    res.send('download');
-})
-
-let streamSection = /^([^/]*)\/stream\/(.*)$/;
-app.get(streamSection, (req, res) => {
-    res.send('stream');
-})
-
-// Default
-app.get(/^.*/, (req, res) => {
-    res.send('<a href="./drive/">to Drive</a>');
-})
-
-app.post(/^.*/, (req, res) => {
-    res.send();
+    res.send(renderPage('drive', undefined));
 })
 
 
 app.listen(PORT, HOSTNAME, () => {
-    log.create(`Self-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
+    log.create(`\nSet root directory [${ROOT_PATH}]\nSelf-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
 })
 
 // ################################### //
@@ -145,9 +94,9 @@ function renderPage(type, source) {
     }
 
     let files = [
-        fs.readFileSync('app/header.partial.html'),
-        fs.readFileSync(`app/${type}/index.html`),
-        fs.readFileSync('app/footer.partial.html')
+        fs.readFileSync('frontend/header.partial.html'),
+        fs.readFileSync(`frontend/${type}/index.html`),
+        fs.readFileSync('frontend/footer.partial.html')
     ];
 
     files = files.map(f => f.toString('utf-8'));
@@ -177,7 +126,7 @@ function fileType(path) {
 
     let stat = fs.statSync(path);
     if (stat.isDirectory()) {
-        return 'directory';
+        return 'folder';
     }
 
     let extension = path.match(/([^.]*)$/)[0];

@@ -1,0 +1,54 @@
+<script>
+    var id = "hepheir";
+    document.cookie = 'id=' + id + ';path=/;';
+</script>
+
+<header class="header-layout">
+    <label class="dynamic-icon" href="./"></label>
+
+    <div class="title">
+        <nav class="path">
+            {{#if parent}}
+            <a class="parent" href="../">{{parent}}</a>
+            <svg class="divider-icon" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                <path d="M0 0h24v24H0z" fill="none"/>
+            </svg>
+            {{/if}}
+            <a class="current" href="./">{{current}}</a>
+        </nav>
+        <span class="select"></span>
+    </div>
+    
+    <label class="drop-down"></label>
+</header>
+
+<main class="body-layout">
+    <ul class="list">
+    {{#files}}
+        {{#if secured}}
+        <li class="item" secured>
+            <a class="item-layout" href="{{name}}">
+                <img class="type-icon" src="/stat/icon/{{type}}-secured.svg">
+                <span>{{name}}</span>
+            </a>
+        {{else}}
+        <li class="item">
+            <input  id="{{id}}" class="hidden" type="checkbox">
+            <label for="{{id}}" class="item">
+                <img class="check-icon" src="/stat/icon/check.svg">
+                <a class="item-layout" href="{{name}}">
+                    <img class="type-icon" src="/stat/icon/{{type}}.svg">
+                    <span>{{name}}</span>
+                    {{#ifEq type "audio"}}
+                    <button class="playlist">
+                        
+                    </button>
+                    {{/ifEq}}
+                </a>
+            </label>
+        {{/if}}
+        </li>
+    {{/files}}
+    </ul>
+</main>

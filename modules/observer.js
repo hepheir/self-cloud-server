@@ -14,14 +14,19 @@ if (!fs.existsSync(SETTINGS_PATH)) {
 }
 
 let json = fs.readFileSync(SETTINGS_PATH)
-                     .toString('utf-8')
-                     .replace(/\/\*((.|[\s+])*)\*\//g, '')
-                     .replace(/\/\/(.*)[\s+]/g, '');
+             .toString('utf-8')
+             .replace(/\/\*((.|[\s+])*)\*\//g, '')
+             .replace(/\/\/(.*)[\s+]/g, '');
 
 var settings = JSON.parse(json);
 
 if (settings.path.root === '') {
     settings.path.root = './';
+
+} else {
+    settings.path.root += '/';
+    settings.path.root = settings.path.root.replace('//', '/');
+
 }
 
 /* ROOT_PATH exists? */

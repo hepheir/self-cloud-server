@@ -1,0 +1,66 @@
+ul.list {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+}
+
+li.item {
+    width: 100%;
+    height: 48px;
+
+    border-bottom: 1px solid #F5F5F5;
+
+    display: flex;
+
+    position: relative;
+
+    background-color: rgb(102, 187, 106);
+}
+
+li.item[secured] { color: rgba(244, 67, 54, .87); }
+li.item[secured] svg { fill: rgba(244, 67, 54, .87); }
+
+label.item-hitbox {
+    width: 100%;
+    height: 100%;
+
+    padding-left: 0;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    transition: padding-left .2s ease;
+
+    cursor: pointer;
+}
+input:checked~label.item-hitbox {
+    padding-left: 48px;
+}
+
+img.check-icon {
+    width: 24px;
+    height: 24px;
+
+    position: absolute;
+    top: 12px;
+    left: 12px;
+
+    opacity: 0;
+
+    transition: opacity .2s ease;
+}
+input:checked~label.item-hitbox>img.check-icon {
+    opacity: 1;
+}
+
+a.item-layout {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+
+    background-color: rgb(255, 255, 255);
+}
