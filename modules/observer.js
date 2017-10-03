@@ -10,20 +10,23 @@ const log = require('./dist/log.js');
 
 /* SETTINGS_PATH exists? */
 if (!fs.existsSync(SETTINGS_PATH)) {
-    console.log(`Error: [${SETTINGS_PATH}] not found.`);
-    throw Error;
+    throw "settings.json not found";
 }
 
-const settings = JSON.parse(
-    fs.readFileSync(SETTINGS_PATH)
-        .toString('utf-8')
-        .replace(/\/\/(.*)[\s+]/g, '')
-);
+let json = fs.readFileSync(SETTINGS_PATH)
+                     .toString('utf-8')
+                     .replace(/\/\*((.|[\s+])*)\*\//g, '')
+                     .replace(/\/\/(.*)[\s+]/g, '');
+
+var settings = JSON.parse(json);
+
+if (settings.path.root === '') {
+    settings.path.root = './';
+}
 
 /* ROOT_PATH exists? */
 if (!fs.existsSync(settings.path.root)) {
-    console.log(`Error: [${settings.path.root}] not found.`);
-    throw Error;
+    throw `Invalid root directory: [${settings.path.root}]`;
 }
 
 module.exports.log = new log(settings.path.log);
