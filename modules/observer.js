@@ -17,7 +17,7 @@ if (!fs.existsSync(SETTINGS_PATH)) {
 const settings = JSON.parse(
     fs.readFileSync(SETTINGS_PATH)
         .toString('utf-8')
-        .replace(/\/\/(.*)[\n]/g, '')
+        .replace(/\/\/(.*)[\s+]/g, '')
 );
 
 /* ROOT_PATH exists? */

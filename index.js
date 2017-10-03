@@ -38,6 +38,14 @@ handlebars.registerHelper('ifEq', function (a, b, opts) {
 /* drive */
 let driveSection = /^([^/]*)\/drive\/(.*)$/;
 app.get(driveSection, (req, res) => {
+    // For building Front end
+    let source = {
+
+    };
+    res.send(renderPage('drive', source));
+    return;
+
+    // Original
     let path = ROOT_PATH + req.params[1];
     req.source = new Object();
 
