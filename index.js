@@ -55,23 +55,22 @@ app.all(driveSection, (req, res) => {
         return;
     }
 
-    if ('json' in req.query) {
-        let files = fs.readdirSync(path);
-        files = files.map(f => {
-            return {
-                name: f,
-                type: fileType(path + f),
-                secured: false
-            };
-        })
-    
-        files = JSON.stringify(files);
-        res.setHeader('Access-Control-Allow-Headers', '*');
-        res.send(files);
-        return;
-    }
+    let content,
+        source = new Object();
 
-    res.send(renderPage('drive', undefined));
+    let files = readDirJSON(path);
+    if ('json' in req.query) {
+        content = JSON.stringify(files);
+        source = undefined;
+
+        res.setHeader('Access-Control-Allow-Headers', '*');
+    } else {
+        source.files = files;
+        content = renderPage('drive', source);
+    }
+    
+
+    res.send(content);
 })
 
 
@@ -85,7 +84,7 @@ app.listen(PORT, HOSTNAME, () => {
  * Create a html document.
  * 
  * @param {string} type 
- * @param {CompileOptions} source 
+ * @param {!CompileOptions} source 
  * @return {HTMLDocument}
  */
 function renderPage(type, source) {
@@ -103,6 +102,40 @@ function renderPage(type, source) {
     files = files.join('');
 
     return handlebars.compile(files)(source);
+}
+
+/**
+ * Read a directory and returns an array of JSON data.
+ * 
+ * @param {String} path 
+ * @return {[{name: String, type: String, secured: Boolean}]}
+ */
+function readDirJSON(path) {
+    path += '/';
+    path = path.replace('//', '/');
+
+    if (!fs.existsSync(path)) {
+        return null;
+    }
+
+    let files = fs.readdirSync(path),
+        file_id = 1;
+
+    files = files.map(file => {
+        let type = fileType(path + file);
+        
+        if (type === 'folder') {
+            file += '/';
+        }
+
+        return {
+            id: 'file_' + file_id++,
+            name: file,
+            type: type,
+            secured: false
+        };
+    })
+    return files;
 }
 
 

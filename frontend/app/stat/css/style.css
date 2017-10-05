@@ -4,40 +4,27 @@
 	box-sizing: border-box;
 	background-color: transparent;
 	color: inherit;
+	font-size: inherit;
 	text-decoration: none;
+
+	--black: rgba(0, 0, 0, .87);
+	--black-inactive: rgba(0, 0, 0, .56);
+
+	--white: rgba(255, 255, 255, .87);
 }
 
 html, body {
 	width: 100%;
 	height: 100%;
-	color: rgba(0, 0, 0, .87);
+	
+	background-color: #F5F5F5;
+	color: var(--black);
 }
 
 input.hidden {
 	position: fixed;
 	opacity: 0;
 	pointer-events: none;
-}
-
-.header-layout {
-	width: 100%;
-	height: 56px;
-	padding: 0 16px;
-	
-	position: fixed;
-	top: 0;
-	left: 0;
-
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-
-	background-color: #000;
-	color: rgba(255, 255, 255, .87);
-}
-
-.header-layout svg {
-	fill: rgba(255, 255, 255, .87);
 }
 
 .body-layout {
@@ -50,3 +37,4 @@ input.hidden {
 
 	list-style: none;
 }
+
