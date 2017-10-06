@@ -1,6 +1,11 @@
 :root {
     --red: rgba(244, 67, 54, .87);
-    --shadow: 0px 3px 6px rgba(0, 0, 0, .16);
+    --shadow: rgba(0, 0, 0, .16);
+}
+
+body {
+    /* Header */
+    padding-top: 56px;
 }
 
 .header-layout {
@@ -18,7 +23,7 @@
 
 	background-color: #FFFFFF;
 	color: var(--black);
-    box-shadow: var(--shadow);
+    box-shadow: 0px 3px 6px var(--shadow);
     
     transition: background-color .2s ease;
 }
@@ -50,7 +55,27 @@
 
 		font-size: 18px;
 		line-height: 1;
-	}
+    }
+
+        .path {
+            display: flex;
+            align-items: center;
+        }
+
+            .path a {
+                padding: 4px;
+
+                cursor: pointer;
+                display: block;
+
+                border-radius: 2px;
+
+                transition: background-color .2s ease;
+            }
+
+            .path a:hover {
+                background-color: rgba(0, 0, 0, .1);
+            }
 
 	.selected-items {
 		display: none;
@@ -67,7 +92,7 @@ ul.list {
     display: block;
 }
 
-li.item {
+.list li.item {
     width: 100%;
     height: 48px;
     padding-left: 0px;
@@ -82,12 +107,12 @@ li.item {
     transition: padding-left .2s ease;
 }
 
-li.item[selected] {
+.list li.item[selected] {
     padding-left: 48px;
 }
 
-[secured] li.item { color: var(--red); }
-[secured] li.item svg { fill: var(--red); }
+[secured] .list li.item { color: var(--red); }
+[secured] .list li.item svg { fill: var(--red); }
 
 
 img.check-icon {
@@ -114,4 +139,30 @@ a.item-layout {
     align-items: center;
 
     background-color: rgb(255, 255, 255);
+}
+
+.primary-icon {
+    margin: auto 24px;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.secondary-icon {
+    margin: auto 16px;
+    
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+
+
+.body-layout {
+	height: 100%;
+
+	overflow-x: hidden;
+	overflow-y: auto;
+	display: block;
+
+	list-style: none;
 }
