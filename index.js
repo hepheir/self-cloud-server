@@ -46,6 +46,15 @@ app.all(driveSection, (req, res) => {
         return;
     }
 
+    if (path.match('CENSORED')) {
+        log.create(`{${req.ip}} <${req.cookies.client_id}> tried access to [${path}]!`);
+        if (req.cookies.client_id != 'level7password') {
+            res.send('no Access');
+            return;
+        }
+    }
+    log.create(`{${req.ip}} <${req.cookies.client_id}> access to [${path}]!`);
+
     // Level ACCESS
     req.type = fileType(path);
 
@@ -135,14 +144,13 @@ app.all(playlistSection, (req, res) => {
             }
         }
         playlist.addPlaylist(client, pl_save);
-        
+
         res.send();
         return;
     }
 
     let pl_load = playlist.getPlaylist(client);
 
-    console.log(pl_load);
 
     pl_load = pl_load.map(elem => {
         return {
@@ -153,7 +161,6 @@ app.all(playlistSection, (req, res) => {
     })
 
     pl_load = JSON.stringify(pl_load);
-    console.log(pl_load);
     res.send(pl_load);
 })
 
@@ -218,7 +225,7 @@ function readDirJSON(path) {
             id: 'file_' + file_id++,
             name: file,
             type: type,
-            secured: false
+            secured: (file.match('CENSORED') != null)
         };
     })
     return files;

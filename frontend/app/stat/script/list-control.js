@@ -62,7 +62,6 @@ function playlistRemove(evt) {
 
 
 function onclickEL(evt) {
-    console.log('a tag play');
     let item = evt.currentTarget;
 
     if (!isSelectMode) {
@@ -73,8 +72,6 @@ function onclickEL(evt) {
 
         let type = item.getAttribute('type'),
             path = item.getAttribute('path');
-
-        console.log(type);
 
         if (type == 'folder') {
             fillList(path);
@@ -237,18 +234,21 @@ function ajaxGet(url, callback) {
     xhr.onreadystatechange = () => {
         if (xhr.readyState == 4 && xhr.status == 200) {
             callback(xhr);
-        }      
+        }
     }
     xhr.open('get', url, true);
     xhr.send();
 }
 
 function fillList(url) {
-    window.history.pushState('', 'DRIVE!', url);
+    ajaxGet(url + '?json', xhr => {
+        if (xhr.responseText == 'no Access') {
+            alert('Access Denied!');
+        }
 
-    url = url + '?json';
-    ajaxGet(url, xhr => {
         let files = JSON.parse(xhr.responseText);
+
+        window.history.pushState('', 'DRIVE!', url);
         listDOM.innerHTML = '';
 
         files.map(f => {
@@ -301,8 +301,6 @@ function updateHeaderPath() {
     let path = location.href.match(/([^/]+)\/([^/]+)\/([^/]*)$/)[0];
     path = decodeURIComponent(path);
     path = path.split('/');
-
-    console.log(path);
     
     let parent = path[0],
         current = path[1];
