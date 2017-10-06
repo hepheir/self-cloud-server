@@ -46,10 +46,12 @@ function playById(id) {
         }
     }
 
-    let prePlayed = v_playlist[nowPlaying];
+    let prePlayed;
+    if (nowPlaying !== undefined) {
+        prePlayed = v_playlist[nowPlaying];
+    }
 
     nowPlayed.node.setAttribute('playing', '');
-    prePlayed.node.removeAttribute('playing');
 
     nowPlaying = v_playlist.indexOf(nowPlayed);
 
@@ -67,7 +69,7 @@ function playByIndex(index) {
 
     let nowPlayed = v_playlist[index],
         prePlayed;
-        
+
     if (nowPlaying !== undefined) {
         prePlayed = v_playlist[nowPlaying];
     } 
