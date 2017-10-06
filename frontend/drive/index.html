@@ -5,7 +5,7 @@
 
 <link rel="stylesheet" href="/stat/css/list.css">
 
-<header class="header-layout">
+<header class="header-layout header">
     <label class="dynamic-icon"></label>
 
     <div class="title">
@@ -26,19 +26,45 @@
 </header>
 
 <main class="body-layout">
-    <ul class="list">
+    <ul id="file-list" class="file-list">
+        <!-- 
+
+        <img class="selected-icon" src="/stat/icon/check.svg">
+        <a class="item-layout">
+            <img class="primary-icon" src="/stat/icon/${type}.svg">
+            <span class="text">${filename}</span>
+
+            //# if type == 'audio'
+            <img class="secondary-icon playlist-add" src="/stat/icon/playlist-add.svg">
+            <img class="secondary-icon playlist-remove" src="/stat/icon/playlist-added.svg">
+        </a>
+
+         -->
     </ul>
 </main>
 
 <aside class="player-layout">
     <div class="playlist-layout">
-        <ul id="ap-playlist" class="playlist"></ul>
+        <div class="playlist">
+            <div class="playlist-header">
+
+                <a class="playlist-sync">
+                    <img id="playlist-save" class="save" src="/stat/icon/playlist-save.svg">
+                    <img id="playlist-load" class="load" src="/stat/icon/playlist-load.svg">
+                    <img class="saved" src="/stat/icon/playlist-saved.svg">
+                </a>
+            </div>
+            <ul id="ap-playlist" class="playlist-list"></ul>
+        </div>
+        
     </div>
 
     <div class="player">
         <audio id="ap-player" controls autoplay pre-load="auto">
             <source id="ap-source" src=""><source>
         </audio>
+        <span id="player-title" class="title"></span>
+        <span id="player-artist" class="artist"></span>
     </div>
 </aside>
 
