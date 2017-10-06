@@ -1,6 +1,6 @@
-const listDOM = document.querySelector('ul.list');
+const listDOM = document.getElementById('file-list');
 
-var itemList = document.querySelectorAll('.list .item');
+var itemList;
 
 var isSelectMode = false,
     isFirstClickAfterSelectModeOn = false,
@@ -8,18 +8,61 @@ var isSelectMode = false,
     toggleSelectModeTimer;
 
 function updateList() {
-    itemList = document.querySelectorAll('.item');
+    itemList = document.querySelectorAll('.file-list .item');
+
+    let playlistAddDOMS = document.querySelectorAll('.playlist-add'),
+        playlistRemoveDOMS = document.querySelectorAll('.playlist-remove');
 
     [].map.call(itemList, elem => {
         elem.addEventListener('click', onclickEL);
         elem.addEventListener('mousedown', onmousedownEL);
         elem.addEventListener('mouseup', onmouseupEL);
-    })
+    });
+
+    // audio-player.js
+    [].map.call(playlistAddDOMS, elem => {
+        elem.addEventListener('click', playlistAdd);
+    });
+    [].map.call(playlistRemoveDOMS, elem => {
+        elem.addEventListener('click', playlistRemove);
+    });
 
     console.log('list updated: ', itemList);
 }
 
+// audio-player.js
+function playlistAdd(evt) {
+    let e = evt.currentTarget.parentNode.parentNode;
+
+    if (!e.hasAttribute('title')) {
+        console.log('wrong item: ', e);
+    }
+
+    let title = e.getAttribute('title'),
+        artist = e.getAttribute('artist'),
+        src = e.getAttribute('path').replace('/drive/', '/stream/');
+
+    let id = quePlaylist(title, artist, src);
+
+    e.setAttribute('added', id);
+
+    evt.stopPropagation();
+}
+function playlistRemove(evt) {
+    let e = evt.currentTarget.parentNode.parentNode;
+
+    let id = e.getAttribute('added');
+    removeFromPlaylist(id);
+
+    e.removeAttribute('added');
+
+    evt.stopPropagation();
+    return;
+}
+
+
 function onclickEL(evt) {
+    console.log('a tag play');
     let item = evt.currentTarget;
 
     if (!isSelectMode) {
@@ -44,7 +87,7 @@ function onclickEL(evt) {
             path = path.replace('/drive/', '/stream/');
 
             quePlaylist(title, artist, path);
-            playNow();
+            playByIndex();
 
         } else {
             console.log("it's a file..!");
@@ -170,21 +213,26 @@ function createListItem(filename, type, secured) {
         item.setAttribute('title', filename);
         // TODO
         item.setAttribute('artist', 'ARTIST');
+
+        audioSupport = 
+        `<img class="secondary-icon playlist-add" src="/stat/icon/playlist-add.svg">
+        <img class="secondary-icon playlist-remove" src="/stat/icon/playlist-added.svg">`;
+    } else {
+        audioSupport = '';
     }
 
     item.innerHTML = `
-    <img class="check-icon" src="/stat/icon/check.svg">
+    <img class="selected-icon" src="/stat/icon/check.svg">
     <a class="item-layout">
         <img class="primary-icon" src="/stat/icon/${type}.svg">
-        <span>${filename}</span>
-        <img class="secondary-icon added" src="/stat/icon/playlist-added.svg">
-        <img class="secondary-icon add" src="/stat/icon/playlist-add.svg">
+        <span class="text">${filename}</span>
+        ${audioSupport}
     </a>`
 
     return item;
 }
 
-const xhr = new XMLHttpRequest();
+var xhr = new XMLHttpRequest();
 function ajaxGet(url, callback) {
     xhr.onreadystatechange = () => {
         if (xhr.readyState == 4 && xhr.status == 200) {

@@ -8,6 +8,7 @@
 const observer = require('./modules/observer.js');
 
 const log = observer.log;
+const playlist = observer.playlist;
 
 const HOSTNAME  = observer.settings.server.hostname
     , PORT      = observer.settings.server.port
@@ -114,10 +115,54 @@ app.all(streamSection, (req, res) => {
 })
 
 
+let playlistSection = /^\/playlist(\/[^/]*)*$/;
+app.all(playlistSection, (req, res) => {
+    let client = req.cookies.id;
+
+    if (!client) {
+        res.send(null);
+    }
+
+    if ('save' in req.query) {
+        let pl_save = new Array();
+
+        for (let url in req.query) {
+            if (url == 'save') {
+                continue;
+
+            } else {
+                pl_save.push(url);
+            }
+        }
+        playlist.addPlaylist(client, pl_save);
+        
+        res.send();
+        return;
+    }
+
+    let pl_load = playlist.getPlaylist(client);
+
+    console.log(pl_load);
+
+    pl_load = pl_load.map(elem => {
+        return {
+            title: elem.match(/[^/]+$/)[0],
+            artist: 'ARTIST',
+            src: elem
+        }
+    })
+
+    pl_load = JSON.stringify(pl_load);
+    console.log(pl_load);
+    res.send(pl_load);
+})
+
+
 // disable HOST NAME
 app.listen(PORT, () => {
     log.create(`\nSet root directory [${ROOT_PATH}]\nSelf-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
 })
+
 
 // ################################### //
 
