@@ -7,6 +7,13 @@
 	font-size: inherit;
 	text-decoration: none;
 
+	
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+	user-select: none;
+}
+
+:root {
 	--black: rgba(0, 0, 0, .87);
 	--black-inactive: rgba(0, 0, 0, .56);
 

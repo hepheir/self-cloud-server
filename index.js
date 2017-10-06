@@ -126,10 +126,10 @@ app.all(streamSection, (req, res) => {
 
 let playlistSection = /^\/playlist(\/[^/]*)*$/;
 app.all(playlistSection, (req, res) => {
-    let client = req.cookies.id;
+    let client = req.cookies.client_id;
 
-    if (!client) {
-        res.send(null);
+    if (!client || client == 'null') {
+        client = 'guest';
     }
 
     if ('save' in req.query) {
@@ -143,7 +143,7 @@ app.all(playlistSection, (req, res) => {
                 pl_save.push(url);
             }
         }
-        playlist.addPlaylist(client, pl_save);
+        playlist.setPlaylist(client, pl_save);
 
         res.send();
         return;
@@ -161,6 +161,7 @@ app.all(playlistSection, (req, res) => {
     })
 
     pl_load = JSON.stringify(pl_load);
+    res.setHeader('Content-Type', 'application/json');
     res.send(pl_load);
 })
 

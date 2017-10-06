@@ -28,16 +28,17 @@ function loadPlaylist(json) {
  * @param {string} client 
  * @param {[String]} playlist 
  */
-function addPlaylist(client, playlist) {
+function setPlaylist(client, playlist) {
     PLAYLIST[client] = playlist;
 
     savePlaylist(PLAYLIST);
+    console.log(PLAYLIST);
 }
 
 function getPlaylist(client) {
-    console.log(`\nfrom playlist.js: ${JSON.stringify(PLAYLIST)}\n`);
     if (!PLAYLIST[client]) {
-        return null;
+        console.log(`Client: [${client}] not found.`);
+        return [];
     }
 
     return PLAYLIST[client];
@@ -45,5 +46,5 @@ function getPlaylist(client) {
 
 // Module
 
-module.exports.addPlaylist = addPlaylist;
+module.exports.setPlaylist = setPlaylist;
 module.exports.getPlaylist = getPlaylist;

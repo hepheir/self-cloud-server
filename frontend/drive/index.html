@@ -32,6 +32,7 @@
         console.log('id: ', client_id);
         client_id = prompt('아이디를 입력해라요!', client_id);
         document.cookie = 'client_id=' + client_id + ';path=/;';
+        playerLayoutDOM.removeAttribute('saved');
     })
 
     function getCookie(cname) {

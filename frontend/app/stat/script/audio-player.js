@@ -132,6 +132,8 @@ function removeFromPlaylist(id) {
             return true;
         }
     })
+    
+    playerLayoutDOM.removeAttribute('saved');
     return;
 }
 
@@ -152,14 +154,34 @@ function createPlaylistElement(id, title) {
     li.className = 'item';
     li.innerHTML = title;
 
-    li.addEventListener('click', evt => {
-        let id = evt.currentTarget.getAttribute('id');
-        playById(id);
-    });
+    li.addEventListener('click', listElementOnClick);
+    li.addEventListener('mousedown', listElementOnMouseDown);
+    li.addEventListener('mouseup', listElementOnMouseUp);
+
+    li.addEventListener('touchstart', listElementOnMouseDown);
+    li.addEventListener('touchend', listElementOnMouseUp);
 
     playlistDOM.appendChild(li);
 
     return li;
+}
+
+function listElementOnClick(evt) {
+    let id = evt.currentTarget.getAttribute('id');
+    playById(id);
+}
+
+var listElemTimer;
+function listElementOnMouseDown(evt) {
+    let id = evt.currentTarget.getAttribute('id');
+
+    listElemTimer = window.setTimeout(function() {
+        removeFromPlaylist(id);
+        evt.stopPropagation();
+    }, 1000);
+}
+function listElementOnMouseUp(evt) {
+    window.clearTimeout(listElemTimer);
 }
 
 // BACK UP CONTROL
@@ -192,8 +214,10 @@ function loadPlaylist() {
             v_playlist = new Array();
             playlistDOM.innerHTML = '';
 
+            let firstIdNum = Date.now();
+
             pl_load.map(elem => {
-                elem.id = 'id_' + Date.now();
+                elem.id = 'id_' + firstIdNum++;
                 elem.node = createPlaylistElement(elem.id, elem.title);
 
                 v_playlist.push(elem);
