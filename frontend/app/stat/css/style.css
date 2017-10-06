@@ -38,3 +38,6 @@ input.hidden {
 	list-style: none;
 }
 
+audio {
+	width: 100%;
+}
