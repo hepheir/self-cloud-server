@@ -164,6 +164,9 @@ app.all(playlistSection, (req, res) => {
     res.send(pl_load);
 })
 
+app.all('/', (req, res) => {
+    res.send('<script>location.replace("./drive/");</script>');
+})
 
 // disable HOST NAME
 app.listen(PORT, () => {
