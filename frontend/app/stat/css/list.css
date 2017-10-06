@@ -36,7 +36,7 @@ body {
 	fill: var(--black);
 }
 
-	.dynamic-icon {
+	.header .dynamic-icon {
 		width: 32px;
 		height: 32px;
 		margin-left: 12px;
@@ -48,7 +48,7 @@ body {
 		cursor: pointer;
 	}
 
-	.title {
+	.header .title {
 		width: 100%;
 
 		flex-shrink: 1;
@@ -57,12 +57,13 @@ body {
 		line-height: 1;
     }
 
-        .path {
+        .header .path {
             display: flex;
             align-items: center;
         }
 
-            .path a {
+            .path .parent,
+            .path .current {
                 padding: 4px;
 
                 cursor: pointer;
@@ -73,26 +74,39 @@ body {
                 transition: background-color .2s ease;
             }
 
-            .path a:hover {
+            .path .parent:hover {
                 background-color: rgba(0, 0, 0, .1);
             }
 
-	.selected-items {
+    .header .selected-items {
 		display: none;
 	}
 
-	[select-mode] .path   {display: none;}
-	[select-mode] .selected-items {display: block;}
+	[select-mode] .header .path {display: none;}
+	[select-mode] .header .selected-items {display: block;}
 
+/* HEADER END */
 
-ul.list {
+/* BODY START */
+
+.body-layout {
+	height: 100%;
+
+	overflow-x: hidden;
+	overflow-y: auto;
+	display: block;
+
+	list-style: none;
+}
+
+ul.file-list {
     width: 100%;
     height: 100%;
 
     display: block;
 }
 
-.list li.item {
+.file-list .item {
     width: 100%;
     height: 48px;
     padding-left: 0px;
@@ -106,63 +120,71 @@ ul.list {
     cursor: pointer;
     transition: padding-left .2s ease;
 }
+.file-list .item[selected] {padding-left: 48px;}
 
-.list li.item[selected] {
-    padding-left: 48px;
-}
-
-[secured] .list li.item { color: var(--red); }
-[secured] .list li.item svg { fill: var(--red); }
+.file-list .item[secured] {color: var(--red);}
+.file-list .item[secured] svg {fill: var(--red);}
 
 
-img.check-icon {
-    width: 24px;
-    height: 24px;
+    .file-list .selected-icon {
+        width: 24px;
+        height: 24px;
 
-    position: absolute;
-    top: 12px;
-    left: 12px;
+        position: absolute;
+        top: 12px;
+        left: 12px;
 
-    opacity: 0;
+        opacity: 0;
 
-    transition: opacity .2s ease;
-}
-[selected] img.check-icon {
-    opacity: 1;
-}
+        transition: opacity .2s ease;
+    }
+    .file-list [selected] .selected-icon {opacity: 1;}
 
-a.item-layout {
-    width: 100%;
-    height: 100%;
+        .file-list .item-layout {
+            width: 100%;
+            height: 100%;
 
-    display: flex;
-    align-items: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
 
-    background-color: rgb(255, 255, 255);
-}
+            background-color: rgb(255, 255, 255);
+        }
 
-.primary-icon {
-    margin: auto 24px;
+            .file-list .primary-icon {
+                margin: auto 24px;
 
-    flex-grow: 0;
-    flex-shrink: 0;
-}
+                flex-grow: 0;
+                flex-shrink: 0;
+            }
 
-.secondary-icon {
-    margin: auto 16px;
-    
-    flex-grow: 0;
-    flex-shrink: 0;
-}
+            .file-list .text {
+                width: 100%;
+                overflow: hidden;
+
+                flex-grow: 1;
+                flex-shrink: 1;
+
+                text-overflow: ellipsis; 
+                white-space: nowrap; 
+
+                display: block;
+            }
+
+            .file-list .secondary-icon {
+                width: 24px;
+                height: 24px;
+                margin: auto 16px;
+                
+                flex-grow: 0;
+                flex-shrink: 0;
+
+                display: none;
+            }
+            .file-list .playlist-add {display: block;}
+            .file-list .playlist-remove {display: none;}
+
+            .file-list [added] .playlist-add {display: none;}
+            .file-list [added] .playlist-remove {display: block;}
 
 
-
-.body-layout {
-	height: 100%;
-
-	overflow-x: hidden;
-	overflow-y: auto;
-	display: block;
-
-	list-style: none;
-}
