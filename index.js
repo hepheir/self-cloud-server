@@ -114,8 +114,8 @@ app.all(streamSection, (req, res) => {
 })
 
 
-
-app.listen(PORT, HOSTNAME, () => {
+// disable HOST NAME
+app.listen(PORT, () => {
     log.create(`\nSet root directory [${ROOT_PATH}]\nSelf-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
 })
 
