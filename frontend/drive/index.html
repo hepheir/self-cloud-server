@@ -11,13 +11,13 @@
     <div class="title">
         <nav class="path">
 
-            <a class="parent" href="../">PARENT{{parent}}</a>
+            <a class="parent">PARENT{{parent}}</a>
             <svg class="divider-icon" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
                 <path d="M0 0h24v24H0z" fill="none"/>
             </svg>
             
-            <a class="current" href="./">CURRENT{{current}}</a>
+            <a class="current">CURRENT{{current}}</a>
         </nav>
         <span class="selected-items">2 Selected</span>
     </div>
@@ -27,19 +27,9 @@
 
 <main class="body-layout">
     <ul class="list">
-    {{#files}}
-        {{#if secured}}
-        <li class="item" secured>
-        {{else}}
-        <li class="item" type="{{type}}" path="{{name}}">
-        {{/if}}
-            <img class="check-icon" src="/stat/icon/check.svg">
-            <a class="item-layout">
-                <img class="type-icon" src="/stat/icon/{{type}}.svg">
-                <span>{{name}}</span>
-            </a>
-        </li>
-    {{/files}}
     </ul>
 </main>
+
+<script src="/stat/script/media.js"></script>
+
 <script src="/stat/script/list-control.js"></script>
