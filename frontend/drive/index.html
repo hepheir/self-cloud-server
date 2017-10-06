@@ -11,15 +11,15 @@
     <div class="title">
         <nav class="path">
 
-            <a class="parent">PARENT{{parent}}</a>
+            <a class="parent"></a>
             <svg class="divider-icon" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
                 <path d="M0 0h24v24H0z" fill="none"/>
             </svg>
             
-            <a class="current">CURRENT{{current}}</a>
+            <a class="current"></a>
         </nav>
-        <span class="selected-items">2 Selected</span>
+        <span class="selected-items"></span>
     </div>
     
     <label class="drop-down"></label>
@@ -30,6 +30,19 @@
     </ul>
 </main>
 
-<script src="/stat/script/media.js"></script>
+<aside class="player-layout">
+    <div class="playlist-layout">
+        <ul id="ap-playlist" class="playlist"></ul>
+    </div>
+
+    <div class="player">
+        <audio id="ap-player" controls autoplay pre-load="auto">
+            <source id="ap-source" src=""><source>
+        </audio>
+    </div>
+</aside>
+
+<link rel="stylesheet" href="/stat/css/audio-player.css">
+<script src="/stat/script/audio-player.js"></script>
 
 <script src="/stat/script/list-control.js"></script>
