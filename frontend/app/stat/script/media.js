@@ -1,30 +1,42 @@
-var player = document.createElement('audio');
+var player = document.getElementById('ap-player');
+var sourceDOM = document.getElementById('ap-source');
+var playlistDOM = document.querySelector('.playlist');
 
 var playlist = new Array();
-
 var nowPlaying = 0;
 
+function updatePlaylist() {
+    playlist = document.querySelectorAll('.playlist .item');
+}
+
 function quePlaylist(src) {
-    playlist.push(src);
-    console.log('playlist updated: ', src);
+    let li = document.createElement('li');
+    li.className = 'item';
+    li.setAttribute('title', title);
+    li.setAttribute('src', src);
+    li.setAttribute('index', playlist.length + 1);
+    li.innerHTML = title;
+
+    playlistDOM.appendChild(li);
+    playlist.push(li);
+
+    console.log('playlist updated: ', title);
 
     if (playlist.length == 1) {
-        player.appendChild(createSource(playlist[0]));
+        sourceDOM.src = src;
         player.load();
         player.play();
     }
 }
 
-
-player.setAttribute('controls', '');
-player.setAttribute('autoplay', '');
-player.setAttribute('pre-load', 'auto');
-
-
-player.addEventListener('ended', onEnded);
+function onPlaylistItemClickEl(evt) {
+    let e = evt.currentTarget;
+}
 
 
-function onEnded() {
+player.addEventListener('ended', onendedEl);
+
+function onendedEl() {
     console.log('on ended');
 
     nowPlaying++;
@@ -32,38 +44,31 @@ function onEnded() {
         nowPlaying -= playlist.length;
     }
 
-    let src = playlist[nowPlaying];
-
-    player.innerHTML = '';
-    player.appendChild(createSource(src));
+    sourceDOM.src = playlist[nowPlaying].src;
 
     player.load();
     player.play();
 }
 
-function createSource(src) {
-    let source = document.createElement('source');
-    source.src = src;
 
-    let extension = src.match(/[^.]+$/)[0];
+const playerLayoutDOM = document.querySelector('.player-layout');
 
-    let type;
-    if (extension == 'mp3') {
-        type = 'mpeg';
-    } else {
-        type = extension.toLowerCase();
-    }
+playerLayoutDOM.addEventListener('click', onclickEl);
 
-    source.type = `audio/${type}`;
-    
-    return source;
+function onclickEl() {
+    togglePlaylist();
 }
 
 
+function isPlaylistOn() {
+    return playerLayoutDOM.hasAttribute('playlist');
+}
 
-player.style.width = '100%';
-player.style.position = 'fixed';
-player.style.bottom = 0;
-player.style.left = 0;
-
-document.querySelector('.body-layout').appendChild(player);
+function togglePlaylist() {
+    console.log('toggle playlist');
+    if (isPlaylistOn()) {
+        playerLayoutDOM.removeAttribute('playlist');
+    } else {
+        playerLayoutDOM.setAttribute('playlist', '');
+    }
+}
