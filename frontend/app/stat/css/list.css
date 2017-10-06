@@ -85,6 +85,19 @@ body {
 	[select-mode] .header .path {display: none;}
 	[select-mode] .header .selected-items {display: block;}
 
+    .header .drop-down {
+        width: 32px;
+        height: 32px;
+        padding: 4px;
+
+        position: fixed;
+        top: 12px;
+        right: 12px;
+
+        display: block;
+
+        cursor: pointer;
+    }
 /* HEADER END */
 
 /* BODY START */
