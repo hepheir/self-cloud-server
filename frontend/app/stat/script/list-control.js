@@ -1,6 +1,6 @@
 const listDOM = document.querySelector('ul.list');
 
-var itemList = document.querySelectorAll('.item');
+var itemList = document.querySelectorAll('.list .item');
 
 var isSelectMode = false,
     isFirstClickAfterSelectModeOn = false,
@@ -31,12 +31,21 @@ function onclickEL(evt) {
         let type = item.getAttribute('type'),
             path = item.getAttribute('path');
 
+        console.log(type);
+
         if (type == 'folder') {
             fillList(path);
 
         } else if (type == 'audio') {
             // Media.js!
-            quePlaylist(path.replace('/drive/', '/stream/'));
+
+            let title = item.getAttribute('title'),
+                artist = item.getAttribute('artist');
+            path = path.replace('/drive/', '/stream/');
+
+            quePlaylist(title, artist, path);
+            playNow();
+
         } else {
             console.log("it's a file..!");
         }
@@ -107,20 +116,6 @@ function updateHeader() {
     headerSelectedItems.innerHTML = `${selectedItems} Selected`;
 }
 
-const parentDOM = document.querySelector('.parent');
-const currentDOM = document.querySelector('.current');
-
-parentDOM.addEventListener('click', evt => {
-    let url;
-    if (location.href.match(/\/$/) === null) {
-        url = location.href.replace(/[^/]+$/, '');
-    } else {
-        url = location.href.replace(/[^/]+\/$/, '');
-    }
-
-    fillList(url);
-})
-
 
 
 const dynamicIcon = document.querySelector('.dynamic-icon');
@@ -171,11 +166,19 @@ function createListItem(filename, type, secured) {
         item.setAttribute('secured', '');
     }
 
+    if (type == 'audio') {
+        item.setAttribute('title', filename);
+        // TODO
+        item.setAttribute('artist', 'ARTIST');
+    }
+
     item.innerHTML = `
     <img class="check-icon" src="/stat/icon/check.svg">
     <a class="item-layout">
-        <img class="type-icon" src="/stat/icon/${type}.svg">
+        <img class="primary-icon" src="/stat/icon/${type}.svg">
         <span>${filename}</span>
+        <img class="secondary-icon added" src="/stat/icon/playlist-added.svg">
+        <img class="secondary-icon add" src="/stat/icon/playlist-add.svg">
     </a>`
 
     return item;
@@ -205,6 +208,7 @@ function fillList(url) {
             listDOM.appendChild(item);
         })
 
+        updateHeaderPath();
         updateList();
     });
 }
@@ -228,3 +232,33 @@ window.addEventListener('keypress', evt => {
 })
 
 window.onpopstate = fillList(location.href);
+
+
+
+const parentDOM = document.querySelector('.parent');
+const currentDOM = document.querySelector('.current');
+
+parentDOM.addEventListener('click', evt => {
+    let url;
+    if (location.href.match(/\/$/) === null) {
+        url = location.href.replace(/[^/]+$/, '');
+    } else {
+        url = location.href.replace(/[^/]+\/$/, '');
+    }
+
+    fillList(url);
+})
+
+function updateHeaderPath() {
+    let path = location.href.match(/([^/]+)\/([^/]+)\/([^/]*)$/)[0];
+    path = decodeURIComponent(path);
+    path = path.split('/');
+
+    console.log(path);
+    
+    let parent = path[0],
+        current = path[1];
+
+    parentDOM.innerHTML = parent;
+    currentDOM.innerHTML = current;
+}
