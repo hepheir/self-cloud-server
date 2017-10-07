@@ -18,7 +18,8 @@ const HOSTNAME  = observer.settings.server.hostname
 const express = require('express')
     , fs = require('fs')
     , handlebars = require('handlebars')
-    , cookieParser = require('cookie-parser');
+    , cookieParser = require('cookie-parser')
+    , nodeID3 = require('node-id3');
 
 const app = express();
 app.use(cookieParser());
@@ -41,19 +42,25 @@ let driveSection = /^\/drive(\/[^/]*)*$/;
 app.all(driveSection, (req, res) => {
     var path = ROOT_PATH + decodeURIComponent(req.path.replace('/drive/', ''));
 
+    let client = req.cookies.client_id;
+
+    if (!client || client == 'null') {
+        client = 'guest';
+    }
+
     if (!fs.existsSync(path)) {
         res.send(renderPage('error', undefined));
         return;
     }
 
     if (path.match('CENSORED')) {
-        log.create(`{${req.ip}} <${req.cookies.client_id}> tried access to [${path}]!`);
-        if (req.cookies.client_id != 'level7password') {
+        log.create(`{${req.ip}} <${client}> tried access to [${path}]!`);
+        if (client != 'level7password') {
             res.send('no Access');
             return;
         }
     }
-    log.create(`{${req.ip}} <${req.cookies.client_id}> access to [${path}]!`);
+    log.create(`{${req.ip}} <${client}> access to [${path}]!`);
 
     // Level ACCESS
     req.type = fileType(path);
@@ -72,6 +79,7 @@ app.all(driveSection, (req, res) => {
         source = undefined;
 
         res.setHeader('Access-Control-Allow-Headers', '*');
+        res.setHeader('Access-Control-Allow-Origin', '*');
     } else {
         source.files = files;
         content = renderPage('drive', source);
@@ -151,19 +159,27 @@ app.all(playlistSection, (req, res) => {
 
     let pl_load = playlist.getPlaylist(client);
 
-
-    pl_load = pl_load.map(elem => {
-        return {
-            title: elem.match(/[^/]+$/)[0],
-            artist: 'ARTIST',
-            src: elem
-        }
-    })
-
     pl_load = JSON.stringify(pl_load);
     res.setHeader('Content-Type', 'application/json');
     res.send(pl_load);
 })
+
+
+let mp3tagSection = /^\/mp3(\/[^/]*)*$/;
+app.all(mp3tagSection, (req, res) => {
+    var path = ROOT_PATH + decodeURIComponent(req.path.replace('/mp3/', ''));
+
+    let tags = nodeID3.read(path);
+
+    let content = new Object();
+
+    content.title = tags.title;
+    content.artist = tags.artist || tags.composer || tags.album;
+    content.src = decodeURIComponent(req.path.replace('/mp3/', '/stream/'));
+
+    res.send(content);
+})
+
 
 app.all('/', (req, res) => {
     res.send('<script>location.replace("./drive/");</script>');
