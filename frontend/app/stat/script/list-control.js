@@ -18,8 +18,9 @@ function updateList() {
         elem.addEventListener('mousedown', onmousedownEL);
         elem.addEventListener('mouseup', onmouseupEL);
 
-        // elem.addEventListener('touchstart', onmousedownEL);
-        // elem.addEventListener('touchend', onmouseupEL);
+        elem.addEventListener('touchstart', onmousedownEL);
+        elem.addEventListener('touchmove', onmouseupEL);
+        elem.addEventListener('touchend', onmouseupEL);
     });
 
     // audio-player.js

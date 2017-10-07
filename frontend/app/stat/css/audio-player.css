@@ -39,6 +39,11 @@ body {
     audio {
         width: 100%;
     }
+    
+    .player .album-art {
+        width: 32px;
+        height: 32px;
+    }
 
 .playlist-layout {
     width: 100%;
@@ -52,7 +57,7 @@ body {
     padding-top: 56px;
     max-height: 0px;
 
-    overflow: auto;
+    overflow: hidden;
 
     position: absolute;
     bottom: 0;
@@ -85,6 +90,13 @@ body {
 
     background-color: #fff;
     box-shadow: 0px 3px 6px var(--shadow);
+}
+
+.playlist-list {
+    width: 100%;
+    height: 100%;
+    padding-bottom: 56px;
+    overflow: auto;
 }
 
 .playlist-sync {
