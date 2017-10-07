@@ -79,7 +79,6 @@ app.all(driveSection, (req, res) => {
         source = undefined;
 
         res.setHeader('Access-Control-Allow-Headers', '*');
-        res.setHeader('Access-Control-Allow-Origin', '*');
     } else {
         source.files = files;
         content = renderPage('drive', source);

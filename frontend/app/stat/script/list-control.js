@@ -233,8 +233,8 @@ function createListItem(filename, type, secured) {
     return item;
 }
 
-var xhr = new XMLHttpRequest();
 function ajaxGet(url, callback) {
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
         if (xhr.readyState == 4 && xhr.status == 200) {
             callback(xhr);
@@ -245,6 +245,7 @@ function ajaxGet(url, callback) {
 }
 
 function fillList(url) {
+    console.log('fillList called');
     ajaxGet(url + '?json', xhr => {
         if (xhr.responseText == 'no Access') {
             alert('Access Denied!');

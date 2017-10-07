@@ -23,13 +23,13 @@ var v_playlist = new Array(),
 
 // Player Control
 playerDOM.addEventListener('click', onPlayerClickEl);
-player.addEventListener('ended', onEndedEl);
+player.addEventListener('ended', onPlayerEndedEl);
 
 function onPlayerClickEl() {
     togglePlaylist();
 }
 
-function onEndedEl() {
+function onPlayerEndedEl() {
     if (v_playlist.length < 1) {
         return;
     }
@@ -183,11 +183,11 @@ function listElementOnMouseUp(evt) {
 savePlaylistDOM.addEventListener('click', savePlaylist);
 loadPlaylistDOM.addEventListener('click', loadPlaylist);
 
-var xhr = new XMLHttpRequest();
 function ajaxGet(url, callback) {
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            callback(xhr);
+        if (this.readyState == 4 && this.status == 200) {
+            callback(this);
         }
     }
     xhr.open('get', url, true);
@@ -207,32 +207,38 @@ function savePlaylist() {
 }
 
 function loadPlaylist() {
-    ajaxGet(location.origin + '/playlist/', xhr => {
-        let pl_load = JSON.parse(xhr.responseText);
+    let xhr = new XMLHttpRequest();
 
-        console.log(pl_load);
+    xhr.open('get', location.origin + '/playlist/', false);
+    xhr.send();
 
-        v_playlist = new Array();
-        playlistDOM.innerHTML = '';
+    let pl_load = JSON.parse(xhr.responseText);
 
-        let firstIdNum = Date.now();
+    v_playlist = new Array();
+    playlistDOM.innerHTML = '';
 
-        pl_load.map(src => {
-            ajaxGet(src.replace('/stream/', '/mp3/'), xhr => {
-                let tags = JSON.parse(xhr.responseText);
+    let firstIdNum = Date.now();
 
-                let id = 'id_' + firstIdNum++;
+    pl_load.map(src => {
+        let xhr = new XMLHttpRequest();
+        
+        xhr.open('get', src.replace('/stream/', '/mp3/'), false);
+        xhr.send();
+        
+        let tags = JSON.parse(xhr.responseText);
+        
+        let id = 'id_' + firstIdNum++;
 
-                v_playlist.push({
-                    id: id,
-                    title: tags.title,
-                    artist: tags.artist,
-                    src: src,
-                    node: createPlaylistElement(id, tags.title)
-                });
-            })
-        })
+        v_playlist.push({
+            id: id,
+            title: tags.title,
+            artist: tags.artist,
+            src: src,
+            node: createPlaylistElement(id, tags.title)
+        });
 
-        playerLayoutDOM.setAttribute('saved', '');
+        return src;
     })
+
+    playerLayoutDOM.setAttribute('saved', '');
 }
