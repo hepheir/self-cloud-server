@@ -93,7 +93,9 @@ function playSong(now) {
 
 // Playlist Control
 
-function quePlaylist(title, artist, src) {
+function quePlaylist(title, artist, src, playnow) {
+    playnow = playnow || false;
+
     let id = 'id_' + Date.now();
     ajaxGet(src.replace('/stream/', '/mp3/'), xhr => {
         let tags = JSON.parse(xhr.responseText);
@@ -105,11 +107,14 @@ function quePlaylist(title, artist, src) {
             title: tags.title,
             artist: tags.artist,
             src: src,
-            node: createPlaylistElement(id, tag.title)
+            node: createPlaylistElement(id, tags.title)
         });
     
         if (v_playlist.length == 1) {
             playByIndex(0);
+            
+        } else if (playnow) {
+            playByIndex();
         }
     
         playerLayoutDOM.removeAttribute('saved');
@@ -221,7 +226,7 @@ function loadPlaylist() {
 
     pl_load.map(src => {
         let xhr = new XMLHttpRequest();
-        
+
         xhr.open('get', src.replace('/stream/', '/mp3/'), false);
         xhr.send();
         

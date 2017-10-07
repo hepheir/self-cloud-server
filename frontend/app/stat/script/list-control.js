@@ -87,8 +87,7 @@ function onclickEL(evt) {
                 artist = item.getAttribute('artist');
             path = path.replace('/drive/', '/stream/');
 
-            quePlaylist(title, artist, path);
-            playByIndex();
+            quePlaylist(title, artist, path, true);
 
         } else {
             console.log("it's a file..!");
