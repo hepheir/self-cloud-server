@@ -1,0 +1,184 @@
+:root {
+    --shadow: rgba(0, 0, 0, .16);
+
+    --button-hover: rgba(0, 0, 0, .16);
+
+    --border-color: rgba(0, 0, 0, .10);
+
+    --primary-color: rgba(0, 0, 0, .87);
+    --secondary-color: rgba(0, 0, 0, .56);
+
+    --primary-background-color: #FFFFFF;
+    --secondary-background-color: #F5F5F5;
+}
+
+body {
+    background-color: var(--secondary-background-color);
+    color: var(--primary-color);
+
+    padding-top: 72px;
+}
+
+.hitbox {
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background-color .2s ease;
+}
+.hitbox:hover {background-color: var(--button-hover);}
+
+.header-layout {
+    width: 100%;
+    height: 56px;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background-color: var(--primary-background-color);
+    box-shadow: 0 3px 6px var(--shadow);
+}
+
+.header {color: var(--primary-color);}
+.header svg {fill: var(--secondary-color);}
+
+.header .primary-button {
+    width: 32px;
+    height: 32px;
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 4px;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.header .secondary-button {
+    width: 32px;
+    height: 32px;
+    margin-right: 16px;
+    padding: 4px;
+    
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+/* SVG path */
+.primary-button .checkbox-checked,
+.primary-button .checkbox-outline,
+.primary-button .checkbox-indeterminated,
+.primary-button .home,
+.primary-button .arrow-back {opacity: 0;}
+
+[root="true"][select-mode="false"] .primary-button .home {opacity: 1;}
+[root="false"][select-mode="false"] .primary-button .arrow-back {opacity: 1;}
+
+[select-mode="true"] .primary-button .checkbox-outline,
+[select-mode="true"] .primary-button .checkbox-indeterminated {opacity: 1;}
+
+[select-mode="true"][selected-items="0"] .header .primary-button .checkbox-checked,
+[select-mode="true"][selected-items="0"] .header .primary-button .checkbox-indeterminated {opacity: 0;}
+
+[select-mode="true"][selected-items="max"] .header .primary-button .checkbox-checked {opacity: 1;}
+[select-mode="true"][selected-items="max"] .header .primary-button .checkbox-indeterminated {opacity: 0;}
+
+
+.header .title {
+    width: 100%;
+
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.body-layout {
+    width: 100%;
+    height: 100%;
+    
+    overflow: auto;
+}
+
+.explorer-list {
+    width: 100%;
+    height: auto;
+}
+
+.explorer-item {
+    width: 100%;
+    height: 48px;
+    border-bottom: 1px solid var(--border-color);
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    background-color: var(--primary-background-color);
+}
+
+.explorer-item .primary-button {
+    width: 32px;
+    height: 32px;
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 4px;
+
+    display: block;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+[select-mode="false"] .explorer-item .primary-button {pointer-events: none;}
+
+.explorer-item .title {
+    width: 100%;
+
+    flex-grow: 1;
+    flex-shrink: 1;
+
+    display: block;
+
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.explorer-item .secondary-button {
+    width: 32px;
+    height: 32px;
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 4px;
+    
+    display: block;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.explorer-item svg {fill: var(--secondary-color)};
+
+.explorer-item .type {
+    width: 56px;
+    padding: 0 16px;
+}
+
+.explorer-item .checkbox-outline,
+.explorer-item .checkbox-checked,
+.explorer-item .folder,
+.explorer-item .audio,
+.explorer-item .file {opacity: 0;}
+
+[select-mode="false"] [type="folder"] .folder {opacity: 1;}
+[select-mode="false"] [type="audio"]  .audio  {opacity: 1;}
+[select-mode="false"] [type="file"]   .file   {opacity: 1;}
+
+.explorer-item .secondary-button {pointer-events: none;}
+.explorer-item[type="audio"] .secondary-button {pointer-events: all;}
+
+.explorer-item .secondary-button .playlist-add,
+.explorer-item .secondary-button .playlist-added {opacity: 0;}
+
+[type="audio"][playlist-added="false"] .playlist-add,
+[type="audio"][playlist-added="true"]  .playlist-added {opacity: 1;}

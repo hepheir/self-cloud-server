@@ -6,7 +6,7 @@
     "path": {
         // Mac: '/Volumes/Hepheir/Database'
         // Win: 'G:/Database'
-        "root": "/Volumes/USB-4GB/",
+        "root": "G:/Database",
         "log": "./log.txt"
     }
 }
