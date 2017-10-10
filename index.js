@@ -83,6 +83,61 @@ app.all(driveJsonSection, (req, res) => {
     console.log(`finished loading,\ntook ${Date.now() - start} ms`);
 })
 
+let streamSection = /^\/stream\//;
+app.all(streamSection, (req, res) => {
+    var path = getPath(req.path.replace(streamSection, ''));
+
+    if (!fs.existsSync(path)) {
+        console.log('404: stream: ', path);
+        res.send(null);
+        return;
+    }
+
+    // Level ACCESS
+    const stat = fs.statSync(path);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+
+    if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] 
+            ? parseInt(parts[1], 10)
+            : fileSize-1;
+        const chunksize = (end-start)+1
+        const file = fs.createReadStream(path, {start, end})
+        const head = {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': 'video/mp4',
+        }
+        res.writeHead(206, head);
+        file.pipe(res);
+    } else {
+        const head = {
+            'Content-Length': fileSize,
+            'Content-Type': 'video/mp4',
+        }
+        res.writeHead(200, head)
+        fs.createReadStream(path).pipe(res)
+    }
+})
+
+let downloadSection = /^\/download\//;
+app.all(downloadSection, (req, res) => {
+    var path = getPath(req.path.replace(streamSection, ''));
+
+    if (!fs.existsSync(path)) {
+        res.send(null);
+        return;
+    } else {
+        let content = fs.readFileSync(path);
+        res.send(content);
+    }
+})
+
+
 // disable HOST NAME
 app.listen(PORT, () => {
     log.create(`\nSet root directory [${ROOT_PATH}]\nSelf-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
