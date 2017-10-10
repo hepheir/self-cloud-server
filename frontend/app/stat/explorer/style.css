@@ -16,7 +16,7 @@ body {
     background-color: var(--secondary-background-color);
     color: var(--primary-color);
 
-    padding-top: 72px;
+    padding-top: 56px;
 }
 
 .hitbox {
@@ -104,6 +104,8 @@ body {
     width: 100%;
     height: auto;
 }
+.explorer-list.folder {padding-top: 16px;}
+.explorer-list.file   {padding-bottom: 120px;}
 
 .explorer-item {
     width: 100%;
@@ -168,10 +170,12 @@ body {
 .explorer-item .checkbox-checked,
 .explorer-item .folder,
 .explorer-item .audio,
+.explorer-item .video,
 .explorer-item .file {opacity: 0;}
 
 [select-mode="false"] [type="folder"] .folder {opacity: 1;}
 [select-mode="false"] [type="audio"]  .audio  {opacity: 1;}
+[select-mode="false"] [type="video"]  .video  {opacity: 1;}
 [select-mode="false"] [type="file"]   .file   {opacity: 1;}
 
 .explorer-item .secondary-button {pointer-events: none;}
