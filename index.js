@@ -6,8 +6,9 @@
 /* Custom Modules */
 const observer = require('./modules/observer.js');
 
-const log = observer.log;
-const playlist = observer.playlist;
+const log = observer.log
+    , playlist = observer.playlist
+    , timer = observer.timer;
 
 const HOSTNAME  = observer.settings.server.hostname
     , PORT      = observer.settings.server.port
@@ -29,9 +30,7 @@ app.all('/', (req, res) => {
 
 let driveSection = /^\/drive\//;
 app.all(driveSection, (req, res) => {
-    var path = getPath(driveSection, req);
-
-    console.log(path);
+    var path = getPath(req.path.replace(driveSection, ''));
 
     let files = [
         fs.readFileSync('frontend/header.partial.html'),
@@ -52,10 +51,11 @@ console.log(ROOT_PATH);
 
 let driveJsonSection = /^\/json\//;
 app.all(driveJsonSection, (req, res) => {
-    let path = getPath(driveJsonSection, req);
+    var path = getPath(req.path.replace(driveJsonSection, ''));
 
     if (!fs.existsSync(path)) {
-        console.log('not found!');
+        console.log('not found!', path);
+        res.send(null);
         return;
     }
     console.log('loading!');
@@ -64,11 +64,17 @@ app.all(driveJsonSection, (req, res) => {
     let files = fs.readdirSync(path);
     
     files = files.map(f => {
-        return {
+        let file = {
             name: f,
             type: fileType(path + f),
             secured: false
         }
+
+        if (file.type == 'folder') {
+            file.name += '/';
+        }
+
+        return file;
     })
 
     let content = JSON.stringify(files);
@@ -84,8 +90,10 @@ app.listen(PORT, () => {
 
 
 
-function getPath(mode, req) {
-    return ROOT_PATH + decodeURIComponent(req.path.replace(mode, ''));
+function getPath(path) {
+    path = ROOT_PATH + decodeURIComponent(path);
+    path = path.replace('//', '/');
+    return path;
 }
 
 

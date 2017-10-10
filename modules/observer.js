@@ -6,8 +6,10 @@ const SETTINGS_PATH = 'settings.json';
 
 const fs = require('fs');
 
-const log = require('./dist/log.js');
-const playlist = require('./dist/playlist.js');
+const log = require('./dist/log.js')
+    , playlist = require('./dist/playlist.js')
+    , timer = require('./dist/timer.js');
+
 
 /* SETTINGS_PATH exists? */
 if (!fs.existsSync(SETTINGS_PATH)) {
@@ -38,3 +40,4 @@ if (!fs.existsSync(settings.path.root)) {
 module.exports.log = new log(settings.path.log);
 module.exports.settings = settings;
 module.exports.playlist = playlist;
+module.exports.timer = timer;
