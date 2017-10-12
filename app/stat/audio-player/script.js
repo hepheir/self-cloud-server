@@ -1,5 +1,8 @@
 isAudioPlayerSupported = true;
 
+
+var audio_autoPlay = false;
+
 const audio_player = document.getElementById('audio-player');
 
 
@@ -28,11 +31,20 @@ audio_asyncLoadPlaylist()
         audio_player.addEventListener('loadeddata', audio_onLoadedData);
         audio_player.addEventListener('ended', audio_onEnded);
 
-        audio_nowPlaying = -1;
-        audio_onEnded();
+        audio_load(0);
+        audio_nowPlaying = 0;
+
+        if (audio_autoPlay) {
+            let audio = audio_player;
+            audio.play();
+            return audio.paused;
+        }
     })
 
     
+function audio_load(index) {
+    audio_player.src = `/stream${audio_playlist[index]}`;
+}
 function audio_onLoadedData(evt) {
     let player = evt.currentTarget;
 
@@ -45,7 +57,7 @@ function audio_onEnded() {
     if (queueIndex >= audio_playlist.length)
         queueIndex = 0;
 
-    audio_player.src = `/stream${audio_playlist[queueIndex]}`;
+    audio_load(queueIndex)
 
     audio_nowPlaying = queueIndex;
 }
@@ -96,8 +108,18 @@ function audio_asyncLoadAudioBuffer(path) {
 
 var audioCtx = new AudioContext();
 
+var hey = new Audio();
+hey.src = audio_playlist[0];
+
 var aud_source = audioCtx.createMediaElementSource(audio_player);
 aud_source.connect(audioCtx.destination);
+
+document.getElementById('audio-snackbar__action').onclick = evt => {
+    evt.currentTarget.parentNode.style.display = 'none';
+    let audio = audio_player;
+    audio.play();
+    return audio.paused;
+};
 
 
 

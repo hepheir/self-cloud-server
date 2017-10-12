@@ -18,6 +18,7 @@
                 </svg>
             </button>
         
+            <button id="test" style="cursor: pointer;">test</button>
             <span id="audio-header__title" class="title">Playlist</span>
             
             <button id="audio-header__secondary-button" class="secondary-button hitbox">
@@ -32,12 +33,12 @@
     </div>
 
     <div id="audio-playerLayout" class="player-layout">
-        <audio id="audio-player" controls autoplay preload="auto"></audio>
+        <audio id="audio-player" controls preload="auto"></audio>
         <span id="audio-player__primary_title" class="primary-title"></span>
         <span id="audio-player__secondary-title" class="secondary-title"></span>
     </div>
 </aside>
 
+<span id="audio-snackbar" class="snackbar">Allow audio player?<button id="audio-snackbar__action" class="action hitbox">allow</button></span>
+
 <script defer src="/stat/audio-player/script.js"></script>
-
-

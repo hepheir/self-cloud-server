@@ -209,13 +209,30 @@ function explorer_asyncWriteOverListItem(index, source) {
 function explorer_asyncAddListItem(source) {
     return new Promise((resolve, reject) => {
 
-        let li = document.createElement('li');
-        li.className = 'explorer-item';
-        
         source.path = explorer_loadingPath + source.name;
-        li.setAttribute('path', source.path);
-        li.setAttribute('type', source.type);
-        li.setAttribute('secured', source.secured);
+
+        // create an array of child DOMs for li.
+        let li_childs = [
+            explorer_createQuickDOM('button', {class: 'primary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: `/stat/explorer/icon/${source.type}.svg`}, undefined)]),
+            explorer_createQuickDOM('span'  , {class: 'title'}, [document.createTextNode(source.name)]),
+            explorer_createQuickDOM('button', {class: 'secondary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: `/stat/explorer/icon/playlist-add.svg`}, undefined)])
+        ]
+        
+        // take an action when user clicks on filename.
+        li_childs[1].addEventListener('click', explorer_listItem_onclickEl);
+
+
+        // the ITEM!
+        let li = explorer_createQuickDOM('li', {
+            class: 'explorer-item',
+            path: source.path,
+            type: source.type,
+            secured: source.secured
+        }, li_childs);
+
+        source.node = li;
+        
+
 
         if (source.type == 'audio' && isAudioPlayerSupported) {
             // MOVE THIS PART TO AUDIOPLAYER ********************************************* !!
@@ -223,32 +240,6 @@ function explorer_asyncAddListItem(source) {
             li.setAttribute('playlist-added', isPlaylistAdded);
         }
 
-        li.innerHTML = `<button class="primary-button hitbox">
-                            <svg height="24" viewBox="0 0 24 24" width="24">
-                                <path d="M0 0h24v24H0z" fill="none"/>
-                                
-                                <path class="checkbox-outline" d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
-                                <path class="checkbox-checked" d="M10 17l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-
-                                <path class="folder" d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
-                                <path class="audio" d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/>
-                                <path class="video" d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/>
-                                <path class="file" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                            </svg>
-                        </button>
-                        <span class="title">${source.name}</span>
-                        <button class="secondary-button hitbox">
-                            <svg height="24" viewBox="0 0 24 24" width="24">
-                                <path d="M0 0h24v24H0z" fill="none"/>
-                                
-                                <path class="playlist-add" d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/>
-                                <path class="playlist-added" d="M14 10H2v2h12v-2zm0-4H2v2h12V6zM2 16h8v-2H2v2zm19.5-4.5L23 13l-6.99 7-4.51-4.5L13 14l3.01 3 5.49-5.5z"/>
-                            </svg>
-                        </button>`;
-
-        li.addEventListener('click', explorer_listItem_onclickEl);
-
-        source.node = li;
 
         // append item to DOM list & Object Virtual list
         if (source.type == 'folder') {
@@ -264,7 +255,7 @@ function explorer_asyncAddListItem(source) {
     })
 }
 function explorer_listItem_onclickEl(evt) {
-    let target = evt.currentTarget;
+    let target = evt.currentTarget.parentNode;
 
     let file = {
         type: target.getAttribute('type'),
@@ -286,4 +277,38 @@ function explorer_listItem_onclickEl(evt) {
             window.open(`/stream/${file.path}`);
         }
     }
+}
+
+
+/**
+ * 
+ * @param {String} tagName
+ * @param {[Node]} childNodes
+ * @param {Object} attributes
+ * @return {HTMLElement}
+ */
+function explorer_createQuickDOM(tagName, attributes, childNodes) {
+    let node = document.createElement(tagName);
+
+    for (let key in attributes) {
+        let val = attributes[key];
+        if (key == 'id') {
+            node.id = val;
+            continue;
+
+        } else if (key == 'class') {
+            node.className = val;
+            continue;
+        }
+        node.setAttribute(key, val);
+    }
+
+    if (childNodes) {
+        childNodes.map(cn => {
+            node.appendChild(cn);
+        })
+    }
+    
+
+    return node;
 }
