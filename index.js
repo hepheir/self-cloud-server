@@ -91,10 +91,7 @@ app.all(playlistSection, (req, res) => {
     let playlist = [
         '/1) Music/We Are Number One Remix but by The Living Tombstone (Lazytown).mp3',
         '/1) Music/11) 멜론 구매곡/17-09 D/TK from Ling tosite sigure-03-Unravel (Acoustic Version).mp3',
-        '/1) Music/11) 멜론 구매곡/17-09 D/Road Of Major-01-さらば碧き面影 _ Saraba Aoki Omokake (안녕 푸르른 옛모습) .mp3',
-        '/1) Music/11) 멜론 구매곡/17-09 D/UVERworld-05-儚くも永久のカナシ _ Hakanakumo Towa No Kanashi (덧없고 영원한 슬픔).mp3',
-        '/1) Music/11) 멜론 구매곡/17-09 D/J.Fla-05-Viva La Vida.mp3',
-        '/1) Music/11) 멜론 구매곡/17-09 D/천재노창-01-GOD (Feat. 슬옹, 신지수, Lovey, 신보혜, 전효진).mp3'
+        '/1) Music/11) 멜론 구매곡/17-09 D/UVERworld-05-儚くも永久のカナシ _ Hakanakumo Towa No Kanashi (덧없고 영원한 슬픔).mp3'
     ];
 
     let content = playlist;
