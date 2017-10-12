@@ -14,7 +14,7 @@ var timer = (function() {
 /**
  * uses decoded URI string.
  */
-var explorer_currentPath = decodeURIComponent(location.pathname.replace('/drive/', '')),
+var explorer_currentPath = decodeURIComponent(location.pathname.replace('/drive/', '/')),
     explorer_loadingPath;
 
 var explorer_virtual_list = {
@@ -57,8 +57,6 @@ explorer_header_primaryBtn_DOM.addEventListener('click', evt => {
  */
 function explorer_asyncOpenDir(path) {
     explorer_loadingPath = decodeURIComponent(path);
-
-    console.log('current dir: ', explorer_currentPath);
     console.log('now opening dir: ', explorer_loadingPath);
 
     return explorer_asyncReadDir(path)
@@ -104,7 +102,7 @@ function explorer_asyncOpenDir(path) {
         })
         .then(() => {
             // Update location
-            window.history.pushState('', 'DRIVE!', `/drive/${path}`);
+            window.history.pushState('', 'DRIVE!', `/drive${explorer_loadingPath}`);
             
             explorer_currentPath = explorer_loadingPath;
 
@@ -163,31 +161,44 @@ function explorer_asyncWriteOverListItem(index, source) {
     return new Promise((resolve, reject) => {
         let listType = source.type == 'folder' ? 'folder' : 'file';
         
-        let oldItem = explorer_virtual_list[listType][index];
+        let legacy = explorer_virtual_list[listType][index];
     
-        source.node = oldItem.node;
+        source.node = legacy.node;
         source.path = explorer_loadingPath + source.name;
     
         // write over an item in virtual list.
         explorer_virtual_list[listType][index] = source;
     
         // write over an node in list DOM.
-        if (listType != 'folder') {
+        source.node.setAttribute('path', source.path);
+        source.node.setAttribute('secured', source.secured);
+        source.node.querySelector('.title').innerHTML = source.name;
+
+        // write over detailed parts if type doesn't match.
+        if (listType != 'folder' && legacy.type != source.type) {
             source.node.setAttribute('type', source.type);
-            
-            if (source.type == 'audio' && isAudioPlayerSupported) {
+            source.node.querySelector('.primary-button img').src = `/stat/explorer/icon/${source.type}.svg`;
+
+
+            let secondary_img_src;
+            if (source.type == 'audio' && isAudioPlayerSupported && !source.secured) {
+                secondary_img_src = '/stat/explorer/icon/playlist-add.svg';
+
                 // MOVE THIS PART TO AUDIOPLAYER ********************************************* !!
                 let isPlaylistAdded = false;
                 source.node.setAttribute('playlist-added', isPlaylistAdded);
+
+
             } else {
+                secondary_img_src = '/stat/explorer/icon/vert-more.svg';
+
                 source.node.removeAttribute('playlist-added');
             }
+
+            source.node.querySelector('.secondary-button img').src = secondary_img_src;
         }
         
-        source.node.setAttribute('path', source.path);
-        source.node.setAttribute('secured', source.secured);
 
-        source.node.querySelector('.title').innerHTML = source.name;
 
         resolve(source);
     })
@@ -211,15 +222,23 @@ function explorer_asyncAddListItem(source) {
 
         source.path = explorer_loadingPath + source.name;
 
+        let secondary_img_src;
+        if (source.type == 'audio' && isAudioPlayerSupported) {
+            secondary_img_src = '/stat/explorer/icon/playlist-add.svg';
+        } else {
+            secondary_img_src = '/stat/explorer/icon/vert-more.svg';
+        }
+
         // create an array of child DOMs for li.
         let li_childs = [
             explorer_createQuickDOM('button', {class: 'primary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: `/stat/explorer/icon/${source.type}.svg`}, undefined)]),
             explorer_createQuickDOM('span'  , {class: 'title'}, [document.createTextNode(source.name)]),
-            explorer_createQuickDOM('button', {class: 'secondary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: `/stat/explorer/icon/playlist-add.svg`}, undefined)])
+            explorer_createQuickDOM('button', {class: 'secondary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: secondary_img_src}, undefined)])
         ]
         
         // take an action when user clicks on filename.
-        li_childs[1].addEventListener('click', explorer_listItem_onclickEl);
+        li_childs[1].addEventListener('click', explorer_listItem_title_onclickEl);
+        li_childs[2].addEventListener('click', explorer_listItem_secondaryBtn_onclickEl);
 
 
         // the ITEM!
@@ -234,7 +253,7 @@ function explorer_asyncAddListItem(source) {
         
 
 
-        if (source.type == 'audio' && isAudioPlayerSupported) {
+        if (source.type == 'audio' && isAudioPlayerSupported && !source.secured) {
             // MOVE THIS PART TO AUDIOPLAYER ********************************************* !!
             let isPlaylistAdded = false;
             li.setAttribute('playlist-added', isPlaylistAdded);
@@ -254,7 +273,7 @@ function explorer_asyncAddListItem(source) {
         resolve(source);
     })
 }
-function explorer_listItem_onclickEl(evt) {
+function explorer_listItem_title_onclickEl(evt) {
     let target = evt.currentTarget.parentNode;
 
     let file = {
@@ -276,6 +295,23 @@ function explorer_listItem_onclickEl(evt) {
         if (confirm(`download file: \n[${file.path}]?`)) {
             window.open(`/stream/${file.path}`);
         }
+    }
+}
+function explorer_listItem_secondaryBtn_onclickEl(evt) {
+    let target = evt.currentTarget.parentNode;
+    
+    let file = {
+        type: target.getAttribute('type'),
+        path: target.getAttribute('path'),
+        secured: target.getAttribute('secured') == 'true'
+    }
+
+    if (!file.secured && file.type == 'audio' && isAudioPlayerSupported) {
+        audio_queueSong(file.path);
+
+    } else {
+        // Info about folder/file
+        console.log('info!');
     }
 }
 
