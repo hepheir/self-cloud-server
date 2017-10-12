@@ -22,7 +22,7 @@ var explorer_virtual_list = {
     file: new Array()
 }
 
-var isAudioPlayerSupported = true;
+var isAudioPlayerSupported = false;
 
 // Global Constants
 const explorer_list_DOM = {

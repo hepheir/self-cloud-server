@@ -1,0 +1,43 @@
+<!-- 
+    mode
+
+    playlist-visible="true"  - show playlist
+
+    playlist-visible="false" - hide playlist
+ -->
+
+<link rel="stylesheet" href="/stat/audio-player/style.css">
+
+<aside class="audio-layout">
+    <div class="playlist-layout">
+        <nav class="playlist-header">
+            <button id="audio-header__primary-button" class="primary-button hitbox">
+                <svg height="24" viewBox="0 0 24 24" width="24">
+                    <path d="M0 0h24v24H0z" fill="none"/>
+
+                </svg>
+            </button>
+        
+            <span id="audio-header__title" class="title">Playlist</span>
+            
+            <button id="audio-header__secondary-button" class="secondary-button hitbox">
+                <svg height="24" viewBox="0 0 24 24" width="24">
+                    <path d="M0 0h24v24H0z" fill="none"/>
+                    
+                </svg>
+            </button>
+        </nav>
+
+        <ul id="audio-playlist" class="playlist"></ul>
+    </div>
+
+    <div id="audio-playerLayout" class="player-layout">
+        <audio id="audio-player" controls autoplay preload="auto"></audio>
+        <span id="audio-player__primary_title" class="primary-title"></span>
+        <span id="audio-player__secondary-title" class="secondary-title"></span>
+    </div>
+</aside>
+
+<script defer src="/stat/audio-player/script.js"></script>
+
+

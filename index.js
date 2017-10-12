@@ -35,6 +35,7 @@ app.all(driveSection, (req, res) => {
     let files = [
         fs.readFileSync('frontend/header.partial.html'),
         fs.readFileSync(`frontend/app/stat/explorer/index.html`),
+        fs.readFileSync(`frontend/app/stat/audio-player/index.html`),
         fs.readFileSync('frontend/footer.partial.html')
     ]
 
@@ -81,6 +82,23 @@ app.all(driveJsonSection, (req, res) => {
     res.send(content);
     
     console.log(`finished loading,\ntook ${Date.now() - start} ms`);
+})
+
+let playlistSection = /^\/playlist\//;
+app.all(playlistSection, (req, res) => {
+    var path = getPath(req.path.replace(playlistSection, ''));
+
+    let playlist = [
+        '/server/music/17-09 D/J.Fla-05-Viva La Vida.mp3',
+        '/server/music/17-09 D/Road Of Major-01-さらば碧き面影 _ Saraba Aoki Omokake (안녕 푸르른 옛모습) .mp3',
+        '/server/music/17-09 D/UVERworld-05-儚くも永久のカナシ _ Hakanakumo Towa No Kanashi (덧없고 영원한 슬픔).mp3',
+        '/server/music/17-09 D/TK from Ling tosite sigure-03-Unravel (Acoustic Version).mp3',
+        '/server/music/17-09 D/천재노창-01-GOD (Feat. 슬옹, 신지수, Lovey, 신보혜, 전효진).mp3'
+    ];
+
+    let content = playlist;
+    res.setHeader('Content-Type', 'application/json');
+    res.send(content);
 })
 
 let streamSection = /^\/stream\//;
