@@ -89,14 +89,39 @@ function explorer_asyncOpenDir(path) {
                     }
                     explorer_virtual_list[listType] = old_list;
                 }
+
+
+                let playlist = new Array();
+                if (isAudioPlayerSupported) {
+
+                    playlist = audio_playlist; // From audio-player!
+                    
+                    let primaryFilter = explorer_loadingPath.replace('/drive/', '/');
+                    playlist = playlist.filter(src => {
+                        if (!src.startsWith(primaryFilter)) {
+                            return false;
+                        }
+                        
+                        return !src.replace(primaryFilter, '').includes('/');
+                    });
+                }
                 
                 // Replaces & adds list items.
                 for (let i = 0; i < new_list.length; i++) {
-                    if (old_list[i]) {
-                        explorer_asyncWriteOverListItem(i, new_list[i]);
-                    } else {
-                        explorer_asyncAddListItem(new_list[i]);
+                    let source = new_list[i];
+
+                    source.playlist_added = undefined;
+                    if (isAudioPlayerSupported && !source.secured && source.type == 'audio') {
+                        source.playlist_added = playlist.includes(explorer_loadingPath + source.name);
                     }
+
+                    if (old_list[i]) {
+                        explorer_asyncWriteOverListItem(i, source);
+                    } else {
+                        explorer_asyncAddListItem(source);
+                    }
+
+                    new_list[i] = source;
                 }
             }
         })
@@ -128,8 +153,8 @@ function explorer_asyncReadDir(path) {
     return new Promise((resolve, reject) => {
         xhr.onreadystatechange = () => {
             if (xhr.readyState == 4 && xhr.status == 200) {
-                if (xhr.responseText) {
-                    let files = JSON.parse(xhr.responseText);
+                if (xhr.response) {
+                    let files = xhr.response;
                     resolve(files);
                 } else {
                     explorer_header_title_DOM.innerHTML = 'Access Denied or Not found.';
@@ -139,6 +164,7 @@ function explorer_asyncReadDir(path) {
             }
         }
         xhr.open('get', `/json/${path}`, true);
+        xhr.responseType = 'json';
         xhr.send();
     });
 }
@@ -175,30 +201,29 @@ function explorer_asyncWriteOverListItem(index, source) {
         source.node.querySelector('.title').innerHTML = source.name;
 
         // write over detailed parts if type doesn't match.
-        if (listType != 'folder' && legacy.type != source.type) {
+        if (listType != 'folder') {
             source.node.setAttribute('type', source.type);
             source.node.querySelector('.primary-button img').src = `/stat/explorer/icon/${source.type}.svg`;
 
 
             let secondary_img_src;
-            if (source.type == 'audio' && isAudioPlayerSupported && !source.secured) {
-                secondary_img_src = '/stat/explorer/icon/playlist-add.svg';
+            if (source.playlist_added !== undefined) { // if Audio Player is supported, `source.added` should be a Boolean value.
 
-                // MOVE THIS PART TO AUDIOPLAYER ********************************************* !!
-                let isPlaylistAdded = false;
-                source.node.setAttribute('playlist-added', isPlaylistAdded);
-
+                if (source.playlist_added) {
+                    secondary_img_src = '/stat/explorer/icon/playlist-added.svg';
+                } else {
+                    secondary_img_src = '/stat/explorer/icon/playlist-add.svg';
+                }
+                source.node.setAttribute('playlist-added', source.playlist_added);
 
             } else {
                 secondary_img_src = '/stat/explorer/icon/vert-more.svg';
-
                 source.node.removeAttribute('playlist-added');
             }
 
             source.node.querySelector('.secondary-button img').src = secondary_img_src;
         }
         
-
 
         resolve(source);
     })
@@ -222,9 +247,16 @@ function explorer_asyncAddListItem(source) {
 
         source.path = explorer_loadingPath + source.name;
 
+        
         let secondary_img_src;
-        if (source.type == 'audio' && isAudioPlayerSupported) {
-            secondary_img_src = '/stat/explorer/icon/playlist-add.svg';
+        if (source.playlist_added !== undefined) { // if Audio Player is supported, `source.playlist_added` should be a Boolean value.
+
+            if (source.playlist_added) {
+                secondary_img_src = '/stat/explorer/icon/playlist-added.svg';
+            } else {
+                secondary_img_src = '/stat/explorer/icon/playlist-add.svg';
+            }
+
         } else {
             secondary_img_src = '/stat/explorer/icon/vert-more.svg';
         }
@@ -249,15 +281,11 @@ function explorer_asyncAddListItem(source) {
             secured: source.secured
         }, li_childs);
 
-        source.node = li;
-        
-
-
-        if (source.type == 'audio' && isAudioPlayerSupported && !source.secured) {
-            // MOVE THIS PART TO AUDIOPLAYER ********************************************* !!
-            let isPlaylistAdded = false;
-            li.setAttribute('playlist-added', isPlaylistAdded);
+        if (source.playlist_added !== undefined) {
+            li.setAttribute('playlist-added', source.playlist_added);
         }
+
+        source.node = li;
 
 
         // append item to DOM list & Object Virtual list
@@ -273,49 +301,6 @@ function explorer_asyncAddListItem(source) {
         resolve(source);
     })
 }
-function explorer_listItem_title_onclickEl(evt) {
-    let target = evt.currentTarget.parentNode;
-
-    let file = {
-        type: target.getAttribute('type'),
-        path: target.getAttribute('path'),
-        secured: target.getAttribute('secured') == 'true'
-    }
-
-    if (file.secured) {
-        console.log(`You cannot access to [${file.path}]`);
-        return;
-    }
-
-    if (file.type == 'folder') {
-        // open dir.
-        explorer_asyncOpenDir(file.path);
-    } else {
-        // open file.
-        if (confirm(`download file: \n[${file.path}]?`)) {
-            window.open(`/stream/${file.path}`);
-        }
-    }
-}
-function explorer_listItem_secondaryBtn_onclickEl(evt) {
-    let target = evt.currentTarget.parentNode;
-    
-    let file = {
-        type: target.getAttribute('type'),
-        path: target.getAttribute('path'),
-        secured: target.getAttribute('secured') == 'true'
-    }
-
-    if (!file.secured && file.type == 'audio' && isAudioPlayerSupported) {
-        audio_queueSong(file.path);
-
-    } else {
-        // Info about folder/file
-        console.log('info!');
-    }
-}
-
-
 /**
  * 
  * @param {String} tagName
@@ -348,3 +333,56 @@ function explorer_createQuickDOM(tagName, attributes, childNodes) {
 
     return node;
 }
+// list item onClick events
+function explorer_listItem_title_onclickEl(evt) {
+    let target = evt.currentTarget.parentNode;
+
+    let file = {
+        type: target.getAttribute('type'),
+        path: target.getAttribute('path'),
+        secured: target.getAttribute('secured') == 'true'
+    }
+
+    if (file.secured) {
+        console.log(`You cannot access to [${file.path}]`);
+        return;
+    }
+
+    if (file.type == 'folder') {
+        // open dir.
+        explorer_asyncOpenDir(file.path);
+    } else {
+        // open file.
+        if (confirm(`download file: \n[${file.path.match(/[^/]+$/)[0]}]?`)) {
+            window.open(`/stream${file.path}`);
+        }
+    }
+}
+function explorer_listItem_secondaryBtn_onclickEl(evt) {
+    let target = evt.currentTarget.parentNode;
+    
+    let file = {
+        type: target.getAttribute('type'),
+        path: target.getAttribute('path'),
+        secured: target.getAttribute('secured') == 'true'
+    }
+
+    if (isAudioPlayerSupported && !file.secured && file.type == 'audio') {
+        if (target.getAttribute('playlist-added') == 'true') {
+            
+            audio_removeSongFromPlaylist(file.path);
+            target.querySelector('.secondary-button img').src = '/stat/explorer/icon/playlist-add.svg';
+            target.setAttribute('playlist-added', 'false');
+
+        } else {
+            audio_queueSongToPlaylist(file.path);
+            target.querySelector('.secondary-button img').src = '/stat/explorer/icon/playlist-added.svg';
+            target.setAttribute('playlist-added', 'true');
+        }
+
+    } else {
+        // Info about folder/file
+        console.log('info!');
+    }
+}
+

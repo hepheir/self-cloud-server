@@ -30,6 +30,8 @@ app.all('/', (req, res) => {
 
 let driveSection = /^\/drive\//;
 app.all(driveSection, (req, res) => {
+    log.create(`<${req.ip}> Rendering UI for client.`);
+    
     var path = getPath(req.path.replace(driveSection, ''));
 
     let files = [
@@ -48,7 +50,6 @@ app.all(driveSection, (req, res) => {
         })
 })
 
-console.log(ROOT_PATH);
 
 let driveJsonSection = /^\/json\//;
 app.all(driveJsonSection, (req, res) => {
@@ -59,8 +60,7 @@ app.all(driveJsonSection, (req, res) => {
         res.send(null);
         return;
     }
-    console.log('loading!');
-    let start = Date.now();
+    timer.start('loading!');
 
     let files = fs.readdirSync(path);
     
@@ -81,20 +81,29 @@ app.all(driveJsonSection, (req, res) => {
     let content = JSON.stringify(files);
     res.send(content);
     
-    console.log(`finished loading,\ntook ${Date.now() - start} ms`);
+    let speed = timer.end('finished loading');
+    log.create(`<${req.ip}> accessed to [${path}], JSON rendering took ${speed} ms.`);
 })
 
 let playlistSection = /^\/playlist\//;
 app.all(playlistSection, (req, res) => {
-    var path = getPath(req.path.replace(playlistSection, ''));
+    let unParsedPath = req.path.replace(playlistSection, '').split('?');
 
-    let playlist = [
-        '/1) Music/We Are Number One Remix but by The Living Tombstone (Lazytown).mp3',
-        '/1) Music/11) 멜론 구매곡/17-09 D/TK from Ling tosite sigure-03-Unravel (Acoustic Version).mp3',
-        '/1) Music/11) 멜론 구매곡/17-09 D/UVERworld-05-儚くも永久のカナシ _ Hakanakumo Towa No Kanashi (덧없고 영원한 슬픔).mp3'
-    ];
+    let client = unParsedPath[0],
+        client_playlist = new Array();
 
-    let content = playlist;
+    for (let src in req.query) {
+        client_playlist.push(src);
+    }
+
+    if (client_playlist.length != 0) {
+        playlist.setPlaylist(client, client_playlist);
+    }
+
+    let content = playlist.getPlaylist(client);
+
+    log.create(`<${client}> saved playlist.`);
+
     res.setHeader('Content-Type', 'application/json');
     res.send(content);
 })
@@ -108,6 +117,8 @@ app.all(streamSection, (req, res) => {
         res.send(null);
         return;
     }
+
+    log.create(`<${req.ip}> downloaded [${path}]`);
 
     // Level ACCESS
     const stat = fs.statSync(path);
@@ -137,19 +148,6 @@ app.all(streamSection, (req, res) => {
         }
         res.writeHead(200, head)
         fs.createReadStream(path).pipe(res)
-    }
-})
-
-let downloadSection = /^\/download\//;
-app.all(downloadSection, (req, res) => {
-    var path = getPath(req.path.replace(streamSection, ''));
-
-    if (!fs.existsSync(path)) {
-        res.send(null);
-        return;
-    } else {
-        let content = fs.readFileSync(path);
-        res.send(content);
     }
 })
 

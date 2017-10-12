@@ -7,5 +7,9 @@ module.exports = (function() {
             console.log(msg);
             t = Date.now();
         },
-        end: msg => console.log(`${msg}\ntook ${Date.now() - t} ms.`)
+        end: msg => {
+            let took = Date.now() - t;
+            console.log(`${msg}\ntook ${took} ms.`)
+            return took;
+        }
 }})()

@@ -32,7 +32,7 @@ function setPlaylist(client, playlist) {
     PLAYLIST[client] = playlist;
 
     savePlaylist(PLAYLIST);
-    console.log(PLAYLIST);
+    console.log(`Client: [${client}], playlist Saved.`);
 }
 
 function getPlaylist(client) {

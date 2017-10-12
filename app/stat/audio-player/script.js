@@ -1,5 +1,3 @@
-isAudioPlayerSupported = true;
-
 
 var audio_autoPlay = false;
 
@@ -9,23 +7,32 @@ const audio_player = document.getElementById('audio-player');
 var audio_playlist = new Array(),
     audio_nowPlaying = undefined;
 
+var clientID = 'hepheir';
 
 
-audio_asyncLoadPlaylist()
+
+audio_asyncLoadPlaylist(clientID)
     .then(playlist => {
+        isAudioPlayerSupported = true;
+        explorer_asyncOpenDir(explorer_currentPath); // From explorer
+        
         audio_playlist = playlist;
         
         audio_player.addEventListener('loadeddata', audio_onLoadedData);
         audio_player.addEventListener('ended', audio_onEnded);
 
-        audio_load(0);
+        if (playlist.length != 0) {
+            audio_load(0);
+        }
         audio_nowPlaying = 0;
     })
 
     
+
 function audio_load(index) {
     audio_player.src = `/stream${audio_playlist[index]}`;
 }
+
 function audio_onLoadedData(evt) {
     let player = evt.currentTarget;
 
@@ -36,6 +43,7 @@ function audio_onLoadedData(evt) {
         player.play();
     }
 }
+
 function audio_onEnded() {
     // Option.
     audio_autoPlay = true;
@@ -49,48 +57,19 @@ function audio_onEnded() {
     audio_nowPlaying = queueIndex;
 }
 
-function audio_asyncLoadPlaylist() {
-    let xhr = new XMLHttpRequest();
-    return new Promise((resolve, reject) => {
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                let playlist = xhr.response;
-                resolve(playlist);
-            }
-        }
-        xhr.open('get', '/playlist/', true);
-        xhr.responseType = 'json';
-        xhr.send();
-    })
-}
 
-/**
- * 
- * @param {String} path 
- * @return {Buffer}
- */
-function audio_asyncLoadAudioBuffer(path) {
-    let xhr = new XMLHttpRequest();
-    return new Promise((resolve, reject) => {
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                let arrayBuffer = xhr.response;
-                if (arrayBuffer) {
-                    resolve(arrayBuffer);
-                } else {
-                    reject();
-                }
-            }
-        }
-        xhr.open('get', `/stream${path}`, true);
-        xhr.responseType = 'arraybuffer';
-        xhr.send();
-    })
-}
-
-function audio_queueSong(path) {
+function audio_queueSongToPlaylist(path) {
     audio_playlist.push(path);
-    console.log('playlist updated:', audio_playlist);
+    audio_asyncSynchronizePlaylistWithServer(clientID)
+    console.log('[Queued] playlist updated:', audio_playlist);
+
+}
+function audio_removeSongFromPlaylist(path) {
+    audio_playlist = audio_playlist.filter(src => {
+        return path != src;
+    });
+    audio_asyncSynchronizePlaylistWithServer(clientID);
+    console.log('[Removed] playlist updated:', audio_playlist);
 }
 
 
@@ -114,6 +93,44 @@ document.getElementById('audio-snackbar__action').onclick = evt => {
     audio.play();
     return audio.paused;
 };
+
+
+function audio_asyncLoadPlaylist(id) {
+    let xhr = new XMLHttpRequest();
+    return new Promise((resolve, reject) => {
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                resolve(xhr.response);
+            }
+        }
+        xhr.open('get', `/playlist/${id}`, true);
+        xhr.responseType = 'json';
+        xhr.send();
+    });
+}
+
+function audio_asyncSynchronizePlaylistWithServer(id) {
+    let xhr = new XMLHttpRequest();
+    new Promise((resolve, reject) => {
+        let data = audio_playlist.join('&');
+
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                if (xhr.response == audio_playlist) {
+                    console.log('synced perfectly.');
+                    resolve(xhr.response);
+                } else {
+                    console.log('did something change while syncing?');
+                    reject()
+                }
+            }
+        }
+        xhr.open('get', `/playlist/${id}?${data}`, true);
+        xhr.responseType = 'json';
+        xhr.send();
+    });
+}
+
 
 
 
@@ -155,3 +172,28 @@ document.getElementById('audio-snackbar__action').onclick = evt => {
 //     // start the source playing
 //     source.start();
 // })
+
+
+// /**
+//  * 
+//  * @param {String} path 
+//  * @return {Buffer}
+//  */
+// function audio_asyncLoadAudioBuffer(path) {
+//     let xhr = new XMLHttpRequest();
+//     return new Promise((resolve, reject) => {
+//         xhr.onreadystatechange = () => {
+//             if (xhr.readyState == 4 && xhr.status == 200) {
+//                 let arrayBuffer = xhr.response;
+//                 if (arrayBuffer) {
+//                     resolve(arrayBuffer);
+//                 } else {
+//                     reject();
+//                 }
+//             }
+//         }
+//         xhr.open('get', `/stream${path}`, true);
+//         xhr.responseType = 'arraybuffer';
+//         xhr.send();
+//     })
+// }
