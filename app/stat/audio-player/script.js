@@ -10,19 +10,6 @@ var audio_playlist = new Array(),
     audio_nowPlaying = undefined;
 
 
-// for Mobile chrome useage.
-function activatePlayer() {
-    let activator = document.getElementById('audio-playerLayout');
-    activator.addEventListener('click', a);
-
-    function a() {
-        audio_player.play();
-
-        activator.removeEventListener('click', a);
-    }
-}
-
-
 
 audio_asyncLoadPlaylist()
     .then(playlist => {
@@ -33,12 +20,6 @@ audio_asyncLoadPlaylist()
 
         audio_load(0);
         audio_nowPlaying = 0;
-
-        if (audio_autoPlay) {
-            let audio = audio_player;
-            audio.play();
-            return audio.paused;
-        }
     })
 
     
@@ -50,9 +31,15 @@ function audio_onLoadedData(evt) {
 
     player.currentTime = 0;
     // player.currentTime = player.duration - 8;
-    player.play();
+    if (audio_autoPlay) {
+        console.log('now Playing: ', audio_playlist[audio_nowPlaying].match(/[^/]+$/)[0]);
+        player.play();
+    }
 }
 function audio_onEnded() {
+    // Option.
+    audio_autoPlay = true;
+
     let queueIndex = audio_nowPlaying + 1;
     if (queueIndex >= audio_playlist.length)
         queueIndex = 0;
@@ -101,6 +88,11 @@ function audio_asyncLoadAudioBuffer(path) {
     })
 }
 
+function audio_queueSong(path) {
+    audio_playlist.push(path);
+    console.log('playlist updated:', audio_playlist);
+}
+
 
 
 // intensed area
@@ -116,7 +108,9 @@ aud_source.connect(audioCtx.destination);
 
 document.getElementById('audio-snackbar__action').onclick = evt => {
     evt.currentTarget.parentNode.style.display = 'none';
+
     let audio = audio_player;
+    console.log('now Playing: ', audio_playlist[audio_nowPlaying].match(/[^/]+$/)[0]);
     audio.play();
     return audio.paused;
 };
