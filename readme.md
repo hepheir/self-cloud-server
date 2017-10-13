@@ -4,6 +4,17 @@
 
 > * * *
 
+> `setPlaylistPath(path)`
+>
+> sets the path of the `json` file to store playlists data.
+
+- `path` : String
+
+> `return` : Void
+
+
+> * * *
+
 > `getPlaylist(clientID, playlistID)`
 >
 > returns an Array of source paths  
@@ -33,7 +44,7 @@ if requested playlist doesn't exist, returns null.
 
 > * * *
 
-> `getPlaylists(clientID)`
+> `getAllPlaylists(clientID)`
 >
 > returns an Array of user's playlists  
 if requested playlist doesn't exist, returns null.

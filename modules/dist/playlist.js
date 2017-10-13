@@ -2,49 +2,82 @@
 
 const fs = require('fs');
 
-const PLAYLIST_PATH = 'playlist.json';
-
+/**
+ *  PLAYLIST = {
+ *      name: {
+ *          playlist1 : ['src1', 'src2', ...],
+ *          .
+ *          .
+ *          .
+ *      },
+ *      .
+ *      .
+ *      .
+ *  }
+ */
 var PLAYLIST;
 
-if (!fs.existsSync(PLAYLIST_PATH)) {
-    fs.closeSync(fs.openSync(PLAYLIST_PATH, 'w'));
-    fs.writeFileSync(PLAYLIST_PATH, '{}');
-}
-
-loadPlaylist();
-
-// FUNCTIONS
-
-function savePlaylist(json) {
-    fs.writeFileSync(PLAYLIST_PATH, JSON.stringify(json));
-}
-
-function loadPlaylist(json) {
-    PLAYLIST = JSON.parse(fs.readFileSync(PLAYLIST_PATH, 'utf8'));
-}
-
-/**
- * 
- * @param {string} client 
- * @param {[String]} playlist 
- */
-function setPlaylist(client, playlist) {
-    PLAYLIST[client] = playlist;
-
-    savePlaylist(PLAYLIST);
-    console.log(`Client: [${client}], playlist Saved.`);
-}
-
-function getPlaylist(client) {
-    if (!PLAYLIST[client]) {
-        console.log(`Client: [${client}] not found.`);
-        return [];
-    }
-
-    return PLAYLIST[client];
-}
+var PLAYLIST_PATH;
 
 // Module
 
-module.exports.setPlaylist = setPlaylist;
+module.exports.setPlaylistPath = setPlaylistPath; // Initializer
+
 module.exports.getPlaylist = getPlaylist;
+module.exports.setPlaylist = setPlaylist;
+module.exports.getAllPlaylists = getAllPlaylists;
+
+
+// FUNCTIONS
+
+function setPlaylistPath(path) {
+    PLAYLIST_PATH = path;
+    
+    // If playlist.json does not exist, create one!
+    if (!fs.existsSync(PLAYLIST_PATH)) {
+        fs.closeSync(fs.openSync(PLAYLIST_PATH, 'w'));
+        fs.writeFileSync(PLAYLIST_PATH, '{}');
+    }
+
+    PLAYLIST = JSON.parse(fs.readFileSync(PLAYLIST_PATH, 'utf8'));
+}
+
+function getPlaylist(clientID, playlistID) {
+    if (!PLAYLIST[clientID]) {
+        PLAYLIST[clientID] = new Object();
+        return null;
+    }
+
+    if (!PLAYLIST[clientID][playlistID]) {
+        return null;
+    }
+
+    return PLAYLIST[clientID][playlistID];
+}
+
+function setPlaylist(clientID, playlistID, playlist) {
+    if (!PLAYLIST[clientID]) {
+        PLAYLIST[clientID] = new Object();
+    }
+
+    PLAYLIST[clientId][playlistID] = playlist;
+
+    // Update [playlist.json] asynchronously.
+    new Promise((resolve, reject) => {
+        fs.writeFileSync(PLAYLIST_PATH, JSON.stringify(json));
+    })
+}
+
+function getAllPlaylists(clientID) {
+    if (!Playlist[clientID]) {
+        return null;
+    }
+
+    let userPlaylists = new Array();
+
+    for (let playlistID in PLAYLIST) {
+        userPlaylists.push(playlistID);
+    }
+
+    return userPlaylists;
+}
