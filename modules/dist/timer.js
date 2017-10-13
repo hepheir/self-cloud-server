@@ -1,15 +1,33 @@
 'use strict';
 
-module.exports = (function() {
-    let t;
-    return {
-        start: msg => {
-            console.log(msg);
-            t = Date.now();
-        },
-        end: msg => {
-            let took = Date.now() - t;
-            console.log(`${msg}\ntook ${took} ms.`)
-            return took;
-        }
-}})()
+var startTime;
+
+// Module
+
+module.exports.start = start;
+module.exports.end = end;
+
+
+// FUNCTIONS
+
+/**
+ * prints the message and start recording time.
+ * @param {String} message 
+ */
+function start(message) {
+    console.log(message);
+    startTime = Date.now();
+}
+
+/**
+ * prints the message with the spent time.
+ * returns the spent time in miliseconds.
+ * @param {String} message 
+ * @return {Number}
+ */
+function end(message) {
+    let time = Date.now() - startTime;
+    console.log(`${msg}\ntook ${time} ms.`)
+
+    return time;
+}

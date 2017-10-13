@@ -17,6 +17,8 @@ const fs = require('fs');
  */
 var PLAYLIST;
 
+// Path
+
 var PLAYLIST_PATH;
 
 // Module
@@ -42,6 +44,13 @@ function setPlaylistPath(path) {
     PLAYLIST = JSON.parse(fs.readFileSync(PLAYLIST_PATH, 'utf8'));
 }
 
+/**
+ * returns an Array of source paths.
+ * if requested playlist doesn't exist, returns null.
+ * @param {String} clientID 
+ * @param {String} playlistID 
+ * @return {Array|null}
+ */
 function getPlaylist(clientID, playlistID) {
     if (!PLAYLIST[clientID]) {
         PLAYLIST[clientID] = new Object();
@@ -55,6 +64,12 @@ function getPlaylist(clientID, playlistID) {
     return PLAYLIST[clientID][playlistID];
 }
 
+/**
+ * Sets a playlist with given id and list
+ * @param {String} clientID 
+ * @param {String} playlistID 
+ * @param {Array} playlist 
+ */
 function setPlaylist(clientID, playlistID, playlist) {
     if (!PLAYLIST[clientID]) {
         PLAYLIST[clientID] = new Object();
@@ -68,6 +83,12 @@ function setPlaylist(clientID, playlistID, playlist) {
     })
 }
 
+/**
+ * returns an Array of user's playlists.
+ * if requested playlist doesn't exist, returns null.
+ * @param {String} clientID
+ * @return {Array|null}
+ */
 function getAllPlaylists(clientID) {
     if (!Playlist[clientID]) {
         return null;
