@@ -130,8 +130,9 @@ function explorer_asyncOpenDir(path) {
             window.history.pushState('', 'DRIVE!', `/drive${explorer_loadingPath}`);
             
             explorer_currentPath = explorer_loadingPath;
+            console.log(path);
 
-            if (path == '') {
+            if (path == '/') {
                 explorer_header_title_DOM.innerHTML = 'Drive';
                 document.body.setAttribute('root', 'true');
             } else {
