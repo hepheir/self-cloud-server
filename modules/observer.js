@@ -32,12 +32,15 @@ if (settings.path.root === '') {
 
 }
 
+log.setRoot(settings.path.log);
+
+
 /* ROOT_PATH exists? */
 if (!fs.existsSync(settings.path.root)) {
     throw `Invalid root directory: [${settings.path.root}]`;
 }
 
-module.exports.log = new log(settings.path.log);
+module.exports.log = log;
 module.exports.settings = settings;
 module.exports.playlist = playlist;
 module.exports.timer = timer;

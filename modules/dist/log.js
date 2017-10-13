@@ -3,13 +3,18 @@
 const fs = require('fs')
     , date = new Date();
 
+var LOG_PATH;
+
+
+var lastestLog = '';
+
+
 /**
  * History log for server management & maintenance.
  * @param {String} path 
  */
-function LOG(path) {
-    this.LOG_PATH = path;
-    this.lastestLog = '';
+function _setRoot(path) {
+    LOG_PATH = path;
 
     if (!fs.existsSync(path)) {
         // Create a new log file.
@@ -24,20 +29,21 @@ function LOG(path) {
  * Create a log and record the message on the specified file.
  * @param {String} msg 
  */
-LOG.prototype.create = function(msg) {
-    let history = fs.readFileSync(this.LOG_PATH),
+function _create(msg) {
+    let history = fs.readFileSync(LOG_PATH),
         newLog;
 
-    if (this.lastestLog === msg) {
+    if (lastestLog === msg) {
         newLog = '*';
 
     } else {
         console.log(msg);
-        this.lastestLog = newLog;
+        lastestLog = msg;
         
-        newLog = `\n[${date.toLocaleString()}] ${msg}`;
+        newLog = `\n[${date.toLocaleString()}] ${msg} `;
     }
-    fs.writeFileSync(this.LOG_PATH, history + newLog);
+    fs.writeFileSync(LOG_PATH, history + newLog);
 }
 
-module.exports = LOG;
+module.exports.setRoot = _setRoot;
+module.exports.create = _create;
