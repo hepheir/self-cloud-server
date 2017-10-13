@@ -52,7 +52,8 @@ function audio_onEnded() {
     if (queueIndex >= audio_playlist.length)
         queueIndex = 0;
 
-    audio_load(queueIndex)
+    audio_load(queueIndex);
+    audio_player.load();
 
     audio_nowPlaying = queueIndex;
 }
