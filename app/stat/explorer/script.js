@@ -1,15 +1,4 @@
-var startTime;
-timer.start = function(message) {
-    console.log(message);
-    startTime = Date.now();
-}
-timer.end = function(message) {
-    let time = Date.now() - startTime;
-    console.log(`${message}\ntook ${time} ms.`)
-
-    return time;
-}
-
+'use strict';
 
 var explorer = {
     list: {
@@ -28,7 +17,67 @@ var explorer = {
 
 
 
+
+explorer.addListItem = function(file) {
+    return new Promise((resolve, reject) => {
+        let isAudioPlayerSupported = false // typeof audio !== undefined;
+        let isFolder = file.type == 'folder';
+        
+        let secondaryButtonIconType;
+        if (isAudioPlayerSupported) {
+            if (file.playlist_added) {
+                secondaryButtonIconType = 'playlist-added';
+            } else {
+                secondaryButtonIconType = 'playlist-add';
+            }
+
+        } else {
+            secondaryButtonIconType = 'vert-more';
+        }
+
+        // create an array of child DOMs for li.
+        let li_childs = [
+            createElementShortCut('button', {class: 'primary-button hitbox'}, [createElementShortCut('img', {class: 'icon', src: `${ICON_PATH + file.type}.svg`}, undefined)]),
+            createElementShortCut('span'  , {class: 'title'}, [document.createTextNode(file.name)]),
+            createElementShortCut('button', {class: 'secondary-button hitbox'}, [createElementShortCut('img', {class: 'icon', src: `${ICON_PATH + secondaryButtonIconType}.svg`}, undefined)])
+        ]
+        
+        // take an action when user clicks on filename.
+        li_childs[1].addEventListener('click', explorer_listItem_title_onclickEl);
+        li_childs[2].addEventListener('click', explorer_listItem_secondaryBtn_onclickEl);
+
+
+        // the ITEM!
+        let li = createElementShortCut('li', {
+            class: 'explorer-item',
+            path: file.path,
+            type: file.type,
+            secured: file.secured
+        }, li_childs);
+
+        if (isAudioPlayerSupported) {
+            li.setAttribute('playlist-added', file.playlist_added);
+        }
+
+        file.node = li;
+
+
+        // append item to DOM list & Object Virtual list
+        if (isFolder) {
+            explorer.DOM.list.folder.appendChild(li);
+            explorer.list.folder.push(file);
+
+        } else {
+            explorer.DOM.list.file.appendChild(li);
+            explorer.list.file.push(file);
+        }
+        
+        resolve(file);
+    })
+}
+
 explorer.readDir = function(path) {
+    // 1. Request a directory data using AJAX
     let xhr = new XMLHttpRequest();
     return new Promise((resolve, reject) => {
         xhr.onreadystatechange = () => {
@@ -40,21 +89,53 @@ explorer.readDir = function(path) {
         xhr.responseType = 'json';
         xhr.send();
     })
-    .then(responseData => {
-        if (Array.isArray(responseData)) {
-            return responseData;
+    // 2. Check whether we received what we want!
+    .then(response => {
+        if (Array.isArray(response)) {
+            return response;
 
         } else {
             console.log('Access Denied or Not found.');
             throw 'Error'
         }
     })
+    // 3. Parse received data.
+    .then(response => {
+        let list = {
+            folder: new Array(),
+            file: new Array()
+        }
+
+        for (let i = 0; i < response.length; i++) {
+            let file = response[i];
+
+            let source = {
+                name: file.name,
+                type: file.type,
+                secured: file.secured,
+                path: explorer.currentPath + file.name,
+                node: undefined
+            }
+
+            if (file.type == 'folder') {
+                list.folder.push(source);
+            } else {
+                list.file.push(source);
+            }
+        }
+        
+        return list;
+    })
 }
 
+explorer.openDir = function(path) {
+    explorer.loadingPath = path;
+    return explorer.readDir(path)
+    // 1. Caculates how many DOMs should be added/removed.
+    .then(list => {
 
-
-
-
+    })
+}
 
 var isAudioPlayerSupported = false;
 
@@ -66,8 +147,6 @@ const explorer_header_primaryBtn_DOM = document.getElementById('explorer-header_
 document.body.setAttribute('root', 'false');
 document.body.setAttribute('select-mode', 'false');
 document.body.setAttribute('selected-items', '0');
-
-explorer_asyncOpenDir(explorer_currentPath);
 
 
 // Header : Arrow Back Button
@@ -172,31 +251,6 @@ function explorer_asyncOpenDir(path) {
         })
 }
 
-/**
- * Request json data of the path, returns `Promise` object: which passes files `json` data.
- * @param {String} path 
- * @return {Promise}
- */
-function explorer_asyncReadDir(path) {
-    let xhr = new XMLHttpRequest();
-    return new Promise((resolve, reject) => {
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                if (xhr.response) {
-                    let files = xhr.response;
-                    resolve(files);
-                } else {
-                    explorer_header_title_DOM.innerHTML = 'Access Denied or Not found.';
-                    reject();
-                }
-                
-            }
-        }
-        xhr.open('get', `/json/${path}`, true);
-        xhr.responseType = 'json';
-        xhr.send();
-    });
-}
 
 /**
  * Write over an existing list item Asynchronously.
@@ -330,38 +384,8 @@ function explorer_asyncAddListItem(source) {
         resolve(source);
     })
 }
-/**
- * 
- * @param {String} tagName
- * @param {[Node]} childNodes
- * @param {Object} attributes
- * @return {HTMLElement}
- */
-function explorer_createQuickDOM(tagName, attributes, childNodes) {
-    let node = document.createElement(tagName);
 
-    for (let key in attributes) {
-        let val = attributes[key];
-        if (key == 'id') {
-            node.id = val;
-            continue;
 
-        } else if (key == 'class') {
-            node.className = val;
-            continue;
-        }
-        node.setAttribute(key, val);
-    }
-
-    if (childNodes) {
-        childNodes.map(cn => {
-            node.appendChild(cn);
-        })
-    }
-    
-
-    return node;
-}
 // list item onClick events
 function explorer_listItem_title_onclickEl(evt) {
     let target = evt.currentTarget.parentNode;
