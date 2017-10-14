@@ -204,21 +204,21 @@ function explorer_asyncWriteOverListItem(index, source) {
         // write over detailed parts if type doesn't match.
         if (listType != 'folder') {
             source.node.setAttribute('type', source.type);
-            source.node.querySelector('.primary-button img').src = `/stat/explorer/icon/${source.type}.svg`;
+            source.node.querySelector('.primary-button img').src = `/stat/icon/${source.type}.svg`;
 
 
             let secondary_img_src;
             if (source.playlist_added !== undefined) { // if Audio Player is supported, `source.added` should be a Boolean value.
 
                 if (source.playlist_added) {
-                    secondary_img_src = '/stat/explorer/icon/playlist-added.svg';
+                    secondary_img_src = '/stat/icon/playlist-added.svg';
                 } else {
-                    secondary_img_src = '/stat/explorer/icon/playlist-add.svg';
+                    secondary_img_src = '/stat/icon/playlist-add.svg';
                 }
                 source.node.setAttribute('playlist-added', source.playlist_added);
 
             } else {
-                secondary_img_src = '/stat/explorer/icon/vert-more.svg';
+                secondary_img_src = '/stat/icon/vert-more.svg';
                 source.node.removeAttribute('playlist-added');
             }
 
@@ -253,18 +253,18 @@ function explorer_asyncAddListItem(source) {
         if (source.playlist_added !== undefined) { // if Audio Player is supported, `source.playlist_added` should be a Boolean value.
 
             if (source.playlist_added) {
-                secondary_img_src = '/stat/explorer/icon/playlist-added.svg';
+                secondary_img_src = '/stat/icon/playlist-added.svg';
             } else {
-                secondary_img_src = '/stat/explorer/icon/playlist-add.svg';
+                secondary_img_src = '/stat/icon/playlist-add.svg';
             }
 
         } else {
-            secondary_img_src = '/stat/explorer/icon/vert-more.svg';
+            secondary_img_src = '/stat/icon/vert-more.svg';
         }
 
         // create an array of child DOMs for li.
         let li_childs = [
-            explorer_createQuickDOM('button', {class: 'primary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: `/stat/explorer/icon/${source.type}.svg`}, undefined)]),
+            explorer_createQuickDOM('button', {class: 'primary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: `/stat/icon/${source.type}.svg`}, undefined)]),
             explorer_createQuickDOM('span'  , {class: 'title'}, [document.createTextNode(source.name)]),
             explorer_createQuickDOM('button', {class: 'secondary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: secondary_img_src}, undefined)])
         ]
@@ -372,12 +372,12 @@ function explorer_listItem_secondaryBtn_onclickEl(evt) {
         if (target.getAttribute('playlist-added') == 'true') {
             
             audio_removeSongFromPlaylist(file.path);
-            target.querySelector('.secondary-button img').src = '/stat/explorer/icon/playlist-add.svg';
+            target.querySelector('.secondary-button img').src = '/stat/icon/playlist-add.svg';
             target.setAttribute('playlist-added', 'false');
 
         } else {
             audio_queueSongToPlaylist(file.path);
-            target.querySelector('.secondary-button img').src = '/stat/explorer/icon/playlist-added.svg';
+            target.querySelector('.secondary-button img').src = '/stat/icon/playlist-added.svg';
             target.setAttribute('playlist-added', 'true');
         }
 
