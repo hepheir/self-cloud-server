@@ -4,9 +4,16 @@
         "port": 3000
     },
     "path": {
-        // Mac: '/Volumes/Hepheir/Database'
-        // Win: 'G:/Database'
-        "root": "G:/Database",
-        "log": "./log.txt"
+        // Mac: "/Volumes/Hepheir/Database"
+        // Win: "G:/Database"
+        "root": "/Volumes/USB-4GB/",
+        "log" : "data/log.txt",
+        "playlist" : "data/playlist.json"
+    },
+    "supported_media_types": {
+        "audio": ["mp3", "ogg", "wav"],
+        "video": ["mp4", "webm", "ogg"],
+        //"text" : ["txt"],
+        "code" : ["c", "cp", "cpp", "py", "js", "html", "css"]
     }
 }
