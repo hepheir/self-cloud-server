@@ -6,9 +6,81 @@
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="mobile-web-app-capable" content="yes">
 	<title>Self-cloud-server</title>
-	<!-- <link rel="stylesheet" href="/stat/layout.css"> -->
 	<link rel="stylesheet" href="/stat/css/style.css">
-
+	<link rel="stylesheet" href="/stat/css/header.css">
 </head>
 
 <body>
+
+
+<header class="header-layout header">
+	<button id="header__primary-button" class="primary-button hitbox">
+		<img class="icon" src="/stat/icon/home.svg" width="24" height="24">
+	</button>
+
+	<span id="header__title" class="title"></span>
+	
+	<button id="header__secondary-button" class="secondary-button hitbox">
+		<img class="icon" src="/stat/icon/home.svg" width="24" height="24">
+	</button>
+</header>
+
+<script>
+
+var header = {
+	DOM: {
+		primaryButton: 		document.getElementById('header__primary-button'),
+		primaryButton_icon: document.querySelector('#header__primary-button img'),
+
+		title: document.getElementById('header__title'),
+
+		secondaryButton: 	document.getElementById('header__secondary-button'),
+		secondaryButton_icon: document.querySelector('#header__secondary-button img')
+	}
+}
+
+var user = {
+	id: 'hepheir'
+}
+
+function createElementShortCut(tagName, attributes, childNodes) {
+    let node = document.createElement(tagName);
+
+    for (let key in attributes) {
+        let val = attributes[key];
+        if (key == 'id') {
+            node.id = val;
+            continue;
+
+        } else if (key == 'class') {
+            node.className = val;
+            continue;
+        }
+        node.setAttribute(key, val);
+    }
+
+    if (childNodes) {
+        childNodes.map(cn => {
+            node.appendChild(cn);
+        })
+    }
+    
+    return node;
+}
+
+// For Debug
+
+var startTime;
+var timer = {
+	start: function(message) {
+		console.log(message);
+		startTime = Date.now();
+	},
+	end: function(message) {
+		let time = Date.now() - startTime;
+		console.log(`${message}\ntook ${time} ms.`)
+
+		return time;
+	}
+}
+</script>

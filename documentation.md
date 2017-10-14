@@ -74,6 +74,47 @@ if requested playlist doesn't exist, returns null.
 
 # Client Modules
 
+## Global
+
+### `createElementShortCut(tagName, attributes, childNodes)` : HTMLElement
+
+> A Shortcut for creating an HTML Element.
+
+- `tagName` : String
+
+- `attributes` : Object
+    > each `{"key" : "value"}` pairs will be set as `{"attribute name" : "value"}`
+
+- `childNodes` : Array [Node1, Node2, ...]
+
+### `header.DOM` : Object
+
+> Header - DOM list 
+
+- `primaryButton` : HTMLElement
+
+- `primaryButton_icon` : HTMLElement
+
+- `title` : HTMLElement
+
+- `secondaryButton` : HTMLElement
+
+- `secondaryButton_icon` : HTMLElement
+
+### `timer.start(message)` : Void
+
+> Shows the message via `console.log`, and starts recording time.
+
+- `message` : String
+
+### `timer.end(message)` : Number
+
+> Stops recording time. Shows the message via `console.log` with how long did the record take.  
+returns the spent time in miliseconds.
+
+- `message` : String
+
+
 ## audio player
 
 ### `audio.status` : Object
@@ -118,9 +159,9 @@ resolves updated playlist on success.
 
 > Lists of folders/files data in current path.
 
-- `explorer.list.folder` : Array
+- `folder` : Array
 
-- `explorer.list.file` : Array
+- `file` : Array
 
 
 ### `explorer.currentPath` : String
