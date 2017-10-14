@@ -27,7 +27,7 @@ function start(message) {
  */
 function end(message) {
     let time = Date.now() - startTime;
-    console.log(`${msg}\ntook ${time} ms.`)
+    console.log(`${message}\ntook ${time} ms.`)
 
     return time;
 }

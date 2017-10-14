@@ -79,7 +79,7 @@ function setPlaylist(clientID, playlistID, playlist) {
 
     // Update [playlist.json] asynchronously.
     new Promise((resolve, reject) => {
-        fs.writeFileSync(PLAYLIST_PATH, JSON.stringify(json));
+        fs.writeFileSync(PLAYLIST_PATH, JSON.stringify(PLAYLIST));
     })
 }
 
