@@ -1,2 +1,0 @@
-supervisor ./index.js
-pause
