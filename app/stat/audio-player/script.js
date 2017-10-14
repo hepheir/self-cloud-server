@@ -1,14 +1,88 @@
+var audio = {
+    status: {
+        playlist: 'default',
+        index: 0
+    },
+    player: undefined,
+    playlist: new Object(),
+
+}
 
 var audio_autoPlay = false;
 
 const audio_player = document.getElementById('audio-player');
 
 
-var audio_playlist = new Array(),
-    audio_nowPlaying = undefined;
 
-var clientID = 'hepheir';
+audio.downloadPlaylist = function(playlistID) {
+    let clientID = 'guest';
+    if (typeof user !== undefined) {
+        clientID = user.id;
+    }
 
+    let xhr = new XMLHttpRequest();
+    return new Promise((resolve, reject) => {
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                resolve(xhr.response);
+            }
+        }
+        xhr.open('get', `/playlist/${clientID}/${playlistID}/`, true);
+        xhr.responseType = 'json';
+        xhr.send();
+    })
+    .then(responseData => {
+        if (Array.isArray(responseData)) {
+            audio.playlist[playlistID] = responseData;
+            return responseData;
+
+        } else {
+            console.log(`Downloaded playlist is not an Array?!`, responseData);
+            throw 'Error';
+        }
+    })
+}
+
+audio.uploadPlaylist = function(playlistID) {
+    if (!audio.playlist[playlistID]) {
+        return null;
+    }
+
+    let clientID = 'guest';
+    if (typeof user !== undefined) {
+        clientID = user.id;
+    }
+
+    let playlist = audio.playlist[playlistID];
+    
+    // encodeURIComponent before sending data to server.
+    clientID   = encodeURIComponent(clientID);
+    playlistID = encodeURIComponent(playlistID);
+    playlist = playlist.map(encodeURIComponent).join('&');
+
+    let xhr = new XMLHttpRequest();
+    return new Promise((resolve, reject) => {
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                resolve(xhr.response);
+            }
+        }
+        xhr.open('get', `/playlist/${clientID}/${playlistID}/?${playlist}`, true);
+        xhr.responseType = 'json';
+        xhr.send();
+    })
+    .then(responseData => {
+        if (responseData == playlist) {
+            console.log('Playlist successfully uploaded.');
+            return responseData;
+        } else {
+            console.log(`Sent playlist doesn't match with received playlist`);
+            throw 'Error';
+        }
+    })
+}
+
+audio.
 
 
 audio_asyncLoadPlaylist(clientID)
@@ -94,44 +168,6 @@ document.getElementById('audio-snackbar__action').onclick = evt => {
     audio.play();
     return audio.paused;
 };
-
-
-function audio_asyncLoadPlaylist(id) {
-    let xhr = new XMLHttpRequest();
-    return new Promise((resolve, reject) => {
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                resolve(xhr.response);
-            }
-        }
-        xhr.open('get', `/playlist/${id}`, true);
-        xhr.responseType = 'json';
-        xhr.send();
-    });
-}
-
-function audio_asyncSynchronizePlaylistWithServer(id) {
-    let xhr = new XMLHttpRequest();
-    new Promise((resolve, reject) => {
-        let data = audio_playlist.join('&');
-
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                if (xhr.response == audio_playlist) {
-                    console.log('synced perfectly.');
-                    resolve(xhr.response);
-                } else {
-                    console.log('did something change while syncing?');
-                    reject()
-                }
-            }
-        }
-        xhr.open('get', `/playlist/${id}?${data}`, true);
-        xhr.responseType = 'json';
-        xhr.send();
-    });
-}
-
 
 
 

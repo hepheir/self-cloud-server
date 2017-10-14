@@ -1,34 +1,64 @@
-var timer = (function() {
-    let t;
-    return {
-        start: msg => {
-            console.log(msg);
-            t = Date.now();
-        },
-        end: msg => console.log(`${msg}\ntook ${Date.now() - t} ms.`)
-}})()
-
-
-// Global Variables
-
-/**
- * uses decoded URI string.
- */
-var explorer_currentPath = decodeURIComponent(location.pathname.replace('/drive/', '/')),
-    explorer_loadingPath;
-
-var explorer_virtual_list = {
-    folder: new Array(),
-    file: new Array()
+var startTime;
+timer.start = function(message) {
+    console.log(message);
+    startTime = Date.now();
 }
+timer.end = function(message) {
+    let time = Date.now() - startTime;
+    console.log(`${message}\ntook ${time} ms.`)
+
+    return time;
+}
+
+
+var explorer = {
+    list: {
+        folder: new Array(),
+        file: new Array()
+    },
+    DOM: {
+        list: {
+            folder: document.getElementById('explorer-list__folder'),
+            file:   document.getElementById('explorer-list__file')
+        }
+    },
+    currentPath: decodeURIComponent(location.pathname.replace('/drive/', '/')),
+    loadingPath: undefined
+}
+
+
+
+explorer.readDir = function(path) {
+    let xhr = new XMLHttpRequest();
+    return new Promise((resolve, reject) => {
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                resolve(xhr.response);
+            }
+        }
+        xhr.open('get', `/json${path}`, true);
+        xhr.responseType = 'json';
+        xhr.send();
+    })
+    .then(responseData => {
+        if (Array.isArray(responseData)) {
+            return responseData;
+
+        } else {
+            console.log('Access Denied or Not found.');
+            throw 'Error'
+        }
+    })
+}
+
+
+
+
+
 
 var isAudioPlayerSupported = false;
 
 // Global Constants
-const explorer_list_DOM = {
-    folder: document.getElementById('explorer-list__folder'),
-    file:   document.getElementById('explorer-list__file')
-}
 const explorer_header_primaryBtn_DOM = document.getElementById('explorer-header__primary-button')
     , explorer_header_title_DOM = document.getElementById('explorer-header__title');
 
@@ -141,8 +171,6 @@ function explorer_asyncOpenDir(path) {
             }
         })
 }
-
-
 
 /**
  * Request json data of the path, returns `Promise` object: which passes files `json` data.
