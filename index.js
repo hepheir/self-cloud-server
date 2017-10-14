@@ -3,27 +3,38 @@
 'use strict';
 
 // ################################### //
-/* Custom Modules */
+
+// Custom Modules
+
 const observer = require('./modules/observer.js');
 
-const log = observer.log
-    , playlist = observer.playlist
+const log   = observer.log
+    , pl    = observer.playlist
     , timer = observer.timer;
 
 const HOSTNAME  = observer.settings.server.hostname
     , PORT      = observer.settings.server.port
     , ROOT_PATH = observer.settings.path.root;
 
+const SUPPORTED_MEDIA_TYPES = observer.settings.supported_media_types;
+
+// NPM Modules
+
 const fs = require('fs')
     , express = require('express')
     , cookieParser = require('cookie-parser');
+
+// Express.js setting
 
 const app = express();
 app.use(cookieParser());
 app.use(express.static('app'));
 
 
-// LOBBY
+// ################################### //
+
+// Routers
+
 app.all('/', (req, res) => {
     res.send('<script>location.replace("./drive/");</script>');
 })
@@ -77,9 +88,8 @@ app.all(driveJsonSection, (req, res) => {
 
         return file;
     })
-
-    let content = JSON.stringify(files);
-    res.send(content);
+    
+    res.send(files);
     
     let speed = timer.end('finished loading');
     log.create(`<${req.ip}> accessed to [${path}], JSON rendering took ${speed} ms.`);
@@ -87,22 +97,23 @@ app.all(driveJsonSection, (req, res) => {
 
 let playlistSection = /^\/playlist\//;
 app.all(playlistSection, (req, res) => {
-    let unParsedPath = req.path.replace(playlistSection, '').split('?');
+    let params = req.path.replace(playlistSection, '').split('/');
 
-    let client = unParsedPath[0],
-        client_playlist = new Array();
+    let clientID = params[0],
+        playlistID = params[1],
+        playlist = new Array();
 
     for (let src in req.query) {
-        client_playlist.push(src);
+        playlist.push(src);
     }
 
-    if (client_playlist.length != 0) {
-        playlist.setPlaylist(client, client_playlist);
+    if (playlist.length != 0) {
+        pl.setPlaylist(clientID, playlistID, playlist);
     }
 
-    let content = playlist.getPlaylist(client);
+    let content = pl.getPlaylist(clientID, playlistID);
 
-    log.create(`<${client}> saved playlist.`);
+    log.create(`<${req.ip}> (${clientID}) saved playlist (${playlistID}).`);
 
     res.setHeader('Content-Type', 'application/json');
     res.send(content);
@@ -152,12 +163,18 @@ app.all(streamSection, (req, res) => {
 })
 
 
-// disable HOST NAME
+// ################################### //
+
+// Launch Server!
+
 app.listen(PORT, () => {
     log.create(`\nSet root directory [${ROOT_PATH}]\nSelf-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
 })
 
 
+// ################################### //
+
+// Functions
 
 function getPath(path) {
     path = ROOT_PATH + decodeURIComponent(path);
@@ -166,13 +183,6 @@ function getPath(path) {
 }
 
 
-// Supported Media Types
-const SUPPORTED_MEDIA_TYPES = {
-    audio: ['mp3', 'ogg', 'wav'],
-    video: ['mp4', 'webm', 'ogg'],
-    //text : ['txt'],
-    code : ['c', 'cp', 'cpp', 'python', 'js', 'html', 'css']
-};
 
 /**
  * Return the type of a file.
