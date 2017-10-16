@@ -29,24 +29,26 @@ var explorer = {
         folderToTop: true,
         maxRender: {
             folder: undefined, // # Used if `explorer.option.folderToTop` is `true`.
-            file: 32,
+            file: 64,
         },
         isSelectMode: false
     }
 }
 
 explorer.list.parse = function(list) {
+    let path = explorer.loadingPath === undefined ? explorer.currentPath : explorer.loadingPath;
+
     list = list.map(filedata => {
         return {
             name: filedata.name,
             type: filedata.type,
             secured: filedata.secured,
-            path: explorer.currentPath + filedata.name,
+            path: path + filedata.name,
             node: undefined,
     
             title: {
                 node: undefined,
-                currentEl: undefined
+                currentEl: new Object()
             },
             primaryButton: {
                 node: undefined,
@@ -94,7 +96,7 @@ explorer.list.createNodes = function(filedata) {
 
         // Add Event listner
         let event = 'click',
-            callback = function (evt) {
+            callback = evt => {
                 let li = evt.currentTarget.parentNode;
 
                 let filedata = {
@@ -103,7 +105,7 @@ explorer.list.createNodes = function(filedata) {
                 };
 
                 if (filedata.type == 'folder') {
-                    explorer.openDir(`/drive${filedata.path}`);
+                    explorer.openDir(filedata.path);
                 }
             };
 
@@ -150,8 +152,7 @@ explorer.list.createNodes = function(filedata) {
                 filedata.title.node,
                 filedata.secondaryButton.node
             ]);
-            
-        
+
         resolve(filedata);
     })
 }
@@ -165,6 +166,11 @@ explorer.readDir = function(path) {
                 resolve(xhr.response);
             }
         }
+
+        path = path.split('/');
+        path = path.map(string => encodeURIComponent(string));
+        path = path.join('/');
+
         xhr.open('get', `/json${path}`, true);
         xhr.responseType = 'json';
         xhr.send();
@@ -175,7 +181,7 @@ explorer.readDir = function(path) {
             return response;
 
         } else {
-            console.log('Access Denied or Not found.');
+            console.log('Access Denied or Not found.', path);
             throw 'Error'
         }
     })
@@ -194,30 +200,30 @@ explorer.openDir = function(path) {
     })
     
     // 2. Parse list.
-    .then(list => explorer.list.parse(list), err => console.log('Skip parsing list'))
+    .then(list => explorer.list.parse(list), err => console.log('Skip parsing list', err))
 
     // 3. Apply parsed list.
     .then(list => {
-        let i;
         for (let type in list) {
             let listDOM = explorer.list.node[type];
 
             let currentList = explorer.list[type],
                 loadingList = list[type];
 
-            let maxRender;
-            if (explorer.option.maxRender[type] !== undefined) {
-                maxRender = explorer.option.maxRender[type] > loadingList.length ? loadingList.length : explorer.option.maxRender[type];
-            } else {
-                maxRender = loadingList.length;
+            let maxRender = explorer.option.maxRender[type];
+
+            if (maxRender === undefined) {
+                maxRender = 10000;
             }
 
-            for (i = 0; i < currentList.length; i++) {
-            // 3-1. Re-use existing nodes to reduce decrease of perfomance caused by building CSSDOMs.
-                if (i < maxRender) {
-                    let current = currentList[i],
-                        loading = loadingList[i];
+            let i;
+            for (i = 0; i < maxRender; i++) {
 
+                let current = currentList[i],
+                    loading = loadingList[i];
+
+            // 3-1. Re-use existing nodes to reduce decrease of perfomance caused by building CSSDOMs.
+                if (current !== undefined && loading !== undefined) {
                     // 3-1-1. Change icon type!
                     if (current.type != loading.type) {
                         current.type = loading.type;
@@ -236,29 +242,43 @@ explorer.openDir = function(path) {
 
                     // 3-1-4. is Secured?
                     current.secured = loading.secured;
-                    
+                    current.node.setAttribute('secured', loading.secured);
+
                     // 3-1-5. Save changes.
                     loadingList[i] = current;
+
                 }
             // 3-2. Remove overflowing nodes.
-                else {
-                    listDOM.removeChild(currentList[i].node);
+                else if (current !== undefined && loading === undefined) {
+
+                    listDOM.removeChild(current.node);
                 }
-            }
             // 3-3. Create nodes. (Asynchronous using Promise)
-            while (i < maxRender) {
-                explorer.list.createNodes(loadingList[i])
-                .then(filedata => {
-                    explorer.list[type][i] = filedata;
-                    listDOM.appendChild(filedata.node);
-                })
+                else if (current === undefined && loading !== undefined) {
+                    let filedata = loadingList[i];
+                    filedata.index = i;
+    
+                    explorer.list.createNodes(filedata)
+                    .then(filedata => {
+                        let i = filedata.index,
+                            type = filedata.type == 'folder' ? 'folder' : 'file';
+                            
+                        delete filedata.index;
+                        
+    
+                        listDOM.appendChild(filedata.node);
+                        explorer.list[type][i] = filedata;
+                    })
 
-                i++;
+                }
+                
+                else { break; }
             }
-
+            explorer.list.rendered[type] = i;
             explorer.list[type] = loadingList;
         }
-    })
+        
+    }, err => console.log('Skip applying parsed list', err))
 
     // 4. Finish up opening a path.
     .then(() => {
@@ -270,12 +290,30 @@ explorer.openDir = function(path) {
         // 4-1. Disable Arrow-back button on header, if currentPath is the root dir.
         if (isRoot) {
             document.body.setAttribute('root', 'true');
+            header.primaryButton.icon.src = `${ICON_PATH}home.svg`
             header.title.node.innerHTML = 'Drive';
+
+            let event = 'click';
+            header.primaryButton.node.removeEventListener(event, header.primaryButton.currentEl[event]);
+
         } else {
             document.body.setAttribute('root', 'false');
+            header.primaryButton.icon.src = `${ICON_PATH}arrow-back.svg`
             header.title.node.innerHTML = explorer.currentPath.match(/[^/]+\/$/)[0].replace('/', '');
+
+            let event = 'click',
+                callback = evt => {
+                    let parentPath = explorer.currentPath.replace(/[^/]+\/$/, '');
+                    explorer.openDir(parentPath)
+                }
+
+            header.primaryButton.node.addEventListener(event, callback);
+            header.primaryButton.currentEl[event] = callback;
         }
-    })
+
+    }, err => console.log(`Failed opening dir [${path}].`, err))
+
+    .catch(err => console.log('Error occured while finishing up opening dir.', err))
 }
 
 
