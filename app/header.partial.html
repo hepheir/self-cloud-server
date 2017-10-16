@@ -21,7 +21,7 @@
 	<span id="header__title" class="title"></span>
 	
 	<button id="header__secondary-button" class="secondary-button hitbox">
-		<img class="icon" src="/stat/icon/home.svg" width="24" height="24">
+		<img class="icon" src="/stat/icon/user-profile.svg" width="24" height="24">
 	</button>
 </header>
 
@@ -30,14 +30,18 @@
 const ICON_PATH = '/stat/icon/';
 
 var header = {
-	DOM: {
-		primaryButton: 		document.getElementById('header__primary-button'),
-		primaryButton_icon: document.querySelector('#header__primary-button img'),
-
-		title: document.getElementById('header__title'),
-
-		secondaryButton: 	document.getElementById('header__secondary-button'),
-		secondaryButton_icon: document.querySelector('#header__secondary-button img')
+	title: {
+		node: document.getElementById('header__title')
+	},
+	primaryButton: {
+		node: document.getElementById('header__primary-button'),
+		currentEl: new Object(), // key: event type, val: callback function.
+		icon: document.querySelector('#header__primary-button img')
+	},
+	secondaryButton: {
+		node: document.getElementById('header__secondary-button'),
+		currentEl: new Object(),
+		icon: document.querySelector('#header__secondary-button img')
 	}
 }
 
