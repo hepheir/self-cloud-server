@@ -2,77 +2,157 @@
 
 var explorer = {
     list: {
-        folder: new Array(),
-        file: new Array()
-    },
-    DOM: {
-        list: {
-            folder: document.getElementById('explorer-list__folder'),
+        folder: new Array(), // # Used if `explorer.option.folderToTop` is `true`.
+        file: new Array(),
+
+        node: {
+            folder: document.getElementById('explorer-list__folder'),  // Used if `explorer.option.folderToTop` is `true`.
             file:   document.getElementById('explorer-list__file')
-        }
+        },
+
+        rendered: {
+            folder: 0, // # Used if `explorer.option.folderToTop` is `true`.
+            file: 0
+        },
+
+        parse: undefined, // Function
+        createNodes: undefined // Function
     },
+
     currentPath: decodeURIComponent(location.pathname.replace('/drive/', '/')),
-    loadingPath: undefined
+    loadingPath: undefined,
+
+    readDir: undefined, // Function
+    openDir: undefined, // Function
+
+    option: {
+        folderToTop: true,
+        maxRender: {
+            folder: undefined, // # Used if `explorer.option.folderToTop` is `true`.
+            file: 32,
+        },
+        isSelectMode: false
+    }
 }
 
-
-
-
-explorer.addListItem = function(file) {
-    return new Promise((resolve, reject) => {
-        let isAudioPlayerSupported = false // typeof audio !== undefined;
-        let isFolder = file.type == 'folder';
-        
-        let secondaryButtonIconType;
-        if (isAudioPlayerSupported) {
-            if (file.playlist_added) {
-                secondaryButtonIconType = 'playlist-added';
-            } else {
-                secondaryButtonIconType = 'playlist-add';
+explorer.list.parse = function(list) {
+    list = list.map(filedata => {
+        return {
+            name: filedata.name,
+            type: filedata.type,
+            secured: filedata.secured,
+            path: explorer.currentPath + filedata.name,
+            node: undefined,
+    
+            title: {
+                node: undefined,
+                currentEl: undefined
+            },
+            primaryButton: {
+                node: undefined,
+                currentEl: new Object(),
+                icon: undefined
+            },
+            secondaryButton: {
+                node: undefined,
+                currentEl: new Object(),
+                icon: undefined
             }
-
-        } else {
-            secondaryButtonIconType = 'vert-more';
         }
+    });
 
-        // create an array of child DOMs for li.
-        let li_childs = [
-            createElementShortCut('button', {class: 'primary-button hitbox'}, [createElementShortCut('img', {class: 'icon', src: `${ICON_PATH + file.type}.svg`}, undefined)]),
-            createElementShortCut('span'  , {class: 'title'}, [document.createTextNode(file.name)]),
-            createElementShortCut('button', {class: 'secondary-button hitbox'}, [createElementShortCut('img', {class: 'icon', src: `${ICON_PATH + secondaryButtonIconType}.svg`}, undefined)])
-        ]
+    let parsedList = {
+        folder: new Array(),
+        file: new Array()
+    };
+
+    // If `folderToTop` option is turned on, let's categorize the list!
+    if (explorer.option.folderToTop) {
+        list.forEach(filedata => {
+            if (filedata.type == 'folder') {
+                parsedList.folder.push(filedata);
+            } else {
+                parsedList.file.push(filedata);
+            }
+        });
+    // In other wise, we are using `explorer.list.file` only.
+    } else {
+        parsedList.file = list;
+    }
+
+    return parsedList;
+}
+
+explorer.list.createNodes = function(filedata) {
+    return new Promise((resolve, reject) => {
+    // Title
+
+        filedata.title.node = createElementShortCut(
+            'span', {class: 'title'},
+            [document.createTextNode(filedata.name)]
+        );
+
+        // Add Event listner
+        let event = 'click',
+            callback = function (evt) {
+                let li = evt.currentTarget.parentNode;
+
+                let filedata = {
+                    type: li.getAttribute('type'),
+                    path: li.getAttribute('path')
+                };
+
+                if (filedata.type == 'folder') {
+                    explorer.openDir(`/drive${filedata.path}`);
+                }
+            };
+
+        filedata.title.node.addEventListener(event, callback);
+        filedata.title.currentEl[event] = callback;
+
+
+    // Button Icons
+
+        filedata.primaryButton.icon = createElementShortCut(
+            'img', {class: 'icon', src: `${ICON_PATH + filedata.type}.svg`},
+            undefined
+        );
+
+        filedata.secondaryButton.icon = createElementShortCut(
+            'img', {class: 'icon', src: `${ICON_PATH}vert-more.svg`},
+            undefined
+        );
+
+
+    // Button Nodes
+
+        filedata.primaryButton.node = createElementShortCut(
+            'button', {class: 'primary-button hitbox'},
+            [filedata.primaryButton.icon]
+        );
         
-        // take an action when user clicks on filename.
-        li_childs[1].addEventListener('click', explorer_listItem_title_onclickEl);
-        li_childs[2].addEventListener('click', explorer_listItem_secondaryBtn_onclickEl);
+        filedata.secondaryButton.node = createElementShortCut(
+            'button', {class: 'secondary-button hitbox'},
+            [filedata.secondaryButton.icon]
+        );
 
+    // li Element
 
-        // the ITEM!
-        let li = createElementShortCut('li', {
-            class: 'explorer-item',
-            path: file.path,
-            type: file.type,
-            secured: file.secured
-        }, li_childs);
-
-        if (isAudioPlayerSupported) {
-            li.setAttribute('playlist-added', file.playlist_added);
-        }
-
-        file.node = li;
-
-
-        // append item to DOM list & Object Virtual list
-        if (isFolder) {
-            explorer.DOM.list.folder.appendChild(li);
-            explorer.list.folder.push(file);
-
-        } else {
-            explorer.DOM.list.file.appendChild(li);
-            explorer.list.file.push(file);
-        }
+        filedata.node = createElementShortCut(
+            'li', {
+                class: 'explorer-item',
+                type: filedata.type,
+                secured: filedata.secured,
+                path: filedata.path
+            },
+            [
+                filedata.primaryButton.node,
+                filedata.title.node,
+                filedata.secondaryButton.node
+            ]);
+            
         
-        resolve(file);
+        resolve(filedata);
     })
 }
 
@@ -99,157 +179,119 @@ explorer.readDir = function(path) {
             throw 'Error'
         }
     })
-    // 3. Parse received data.
-    .then(response => {
-        let list = {
-            folder: new Array(),
-            file: new Array()
-        }
-
-        for (let i = 0; i < response.length; i++) {
-            let file = response[i];
-
-            let source = {
-                name: file.name,
-                type: file.type,
-                secured: file.secured,
-                path: explorer.currentPath + file.name,
-                node: undefined
-            }
-
-            if (file.type == 'folder') {
-                list.folder.push(source);
-            } else {
-                list.file.push(source);
-            }
-        }
-        
-        return list;
-    })
 }
 
 explorer.openDir = function(path) {
     explorer.loadingPath = path;
+    
+    // 1. Request directory data to server.
     return explorer.readDir(path)
-    // 1. Caculates how many DOMs should be added/removed.
-    .then(list => {
+    .catch(err => {
+        console.log('cancel openDir.');
+        explorer.loadingPath = undefined;
 
+        throw err;
+    })
+    
+    // 2. Parse list.
+    .then(list => explorer.list.parse(list), err => console.log('Skip parsing list'))
+
+    // 3. Apply parsed list.
+    .then(list => {
+        let i;
+        for (let type in list) {
+            let listDOM = explorer.list.node[type];
+
+            let currentList = explorer.list[type],
+                loadingList = list[type];
+
+            let maxRender;
+            if (explorer.option.maxRender[type] !== undefined) {
+                maxRender = explorer.option.maxRender[type] > loadingList.length ? loadingList.length : explorer.option.maxRender[type];
+            } else {
+                maxRender = loadingList.length;
+            }
+
+            for (i = 0; i < currentList.length; i++) {
+            // 3-1. Re-use existing nodes to reduce decrease of perfomance caused by building CSSDOMs.
+                if (i < maxRender) {
+                    let current = currentList[i],
+                        loading = loadingList[i];
+
+                    // 3-1-1. Change icon type!
+                    if (current.type != loading.type) {
+                        current.type = loading.type;
+                        current.node.setAttribute('type', loading.type);
+
+                        current.primaryButton.icon.src = `${ICON_PATH + loading.type}.svg`;
+                    }
+
+                    // 3-1-2. Write over file name.
+                    current.name = loading.name;
+                    current.title.node.innerHTML = loading.name;
+
+                    // 3-1-3. Write over file path.
+                    current.path = loading.path;
+                    current.node.setAttribute('path', loading.path);
+
+                    // 3-1-4. is Secured?
+                    current.secured = loading.secured;
+                    
+                    // 3-1-5. Save changes.
+                    loadingList[i] = current;
+                }
+            // 3-2. Remove overflowing nodes.
+                else {
+                    listDOM.removeChild(currentList[i].node);
+                }
+            }
+            // 3-3. Create nodes. (Asynchronous using Promise)
+            while (i < maxRender) {
+                explorer.list.createNodes(loadingList[i])
+                .then(filedata => {
+                    explorer.list[type][i] = filedata;
+                    listDOM.appendChild(filedata.node);
+                })
+
+                i++;
+            }
+
+            explorer.list[type] = loadingList;
+        }
+    })
+
+    // 4. Finish up opening a path.
+    .then(() => {
+        window.history.pushState('', '', `/drive${explorer.loadingPath}`);
+
+        explorer.currentPath = explorer.loadingPath;
+
+        let isRoot = explorer.currentPath == '/';
+        // 4-1. Disable Arrow-back button on header, if currentPath is the root dir.
+        if (isRoot) {
+            document.body.setAttribute('root', 'true');
+            header.title.node.innerHTML = 'Drive';
+        } else {
+            document.body.setAttribute('root', 'false');
+            header.title.node.innerHTML = explorer.currentPath.match(/[^/]+\/$/)[0].replace('/', '');
+        }
     })
 }
 
-var isAudioPlayerSupported = false;
 
-// Global Constants
-const explorer_header_primaryBtn_DOM = document.getElementById('explorer-header__primary-button')
-    , explorer_header_title_DOM = document.getElementById('explorer-header__title');
+// Initialize!
+explorer.openDir(explorer.currentPath);
 
 
-document.body.setAttribute('root', 'false');
-document.body.setAttribute('select-mode', 'false');
-document.body.setAttribute('selected-items', '0');
 
 
-// Header : Arrow Back Button
-explorer_header_primaryBtn_DOM.addEventListener('click', evt => {
-    if (document.body.getAttribute('root') == 'false') {
-        let path = explorer_currentPath.replace(/[^/]+\/$/, '');
-        explorer_asyncOpenDir(path);
-    }
-})
 
 
-// Global Functions
-
-/**
- * path : encoded URI String.
- * @param {String} path 
- */
-function explorer_asyncOpenDir(path) {
-    explorer_loadingPath = decodeURIComponent(path);
-    console.log('now opening dir: ', explorer_loadingPath);
-
-    return explorer_asyncReadDir(path)
-        .then(files => {
-            let list = {
-                folder: new Array(),
-                file:   new Array()
-            };
-
-            files.map(f => {
-                if (f.type == 'folder') {
-                    list.folder.push(f);
-                } else {
-                    list.file.push(f);
-                }
-            });
-
-            return list;
-        })
-        .then(list => {
-            for (let listType in list) {
-                let new_list = list[listType],
-                    old_list = explorer_virtual_list[listType];
-
-                // Removes overflowing items.
-                if (old_list.length > new_list.length) {
-                    for (let i = old_list.length - 1; i >= new_list.length; i--) {
-                        explorer_list_DOM[listType].removeChild(old_list[i].node);
-                        old_list.pop();
-                    }
-                    explorer_virtual_list[listType] = old_list;
-                }
 
 
-                let playlist = new Array();
-                if (isAudioPlayerSupported) {
 
-                    playlist = audio_playlist; // From audio-player!
-                    
-                    let primaryFilter = explorer_loadingPath.replace('/drive/', '/');
-                    playlist = playlist.filter(src => {
-                        if (!src.startsWith(primaryFilter)) {
-                            return false;
-                        }
-                        
-                        return !src.replace(primaryFilter, '').includes('/');
-                    });
-                }
-                
-                // Replaces & adds list items.
-                for (let i = 0; i < new_list.length; i++) {
-                    let source = new_list[i];
 
-                    source.playlist_added = undefined;
-                    if (isAudioPlayerSupported && !source.secured && source.type == 'audio') {
-                        source.playlist_added = playlist.includes(explorer_loadingPath + source.name);
-                    }
 
-                    if (old_list[i]) {
-                        explorer_asyncWriteOverListItem(i, source);
-                    } else {
-                        explorer_asyncAddListItem(source);
-                    }
-
-                    new_list[i] = source;
-                }
-            }
-        })
-        .then(() => {
-            // Update location
-            window.history.pushState('', 'DRIVE!', `/drive${explorer_loadingPath}`);
-            
-            explorer_currentPath = explorer_loadingPath;
-            console.log(path);
-
-            if (path == '/') {
-                explorer_header_title_DOM.innerHTML = 'Drive';
-                document.body.setAttribute('root', 'true');
-            } else {
-                explorer_header_title_DOM.innerHTML = explorer_currentPath.match(/[^/]+\/$/)[0].replace('/', '');
-                document.body.setAttribute('root', 'false');
-            }
-        })
-}
 
 
 /**
@@ -312,78 +354,6 @@ function explorer_asyncWriteOverListItem(index, source) {
     })
 }
 
-/**
- * Create & add item Asynchronously.
- * 
- * source required key/values:
- * 
- *      source = {
- *          name: 'filename',
- *          type: 'filetype',
- *          secured: 'boolean'
- *      }
- * @param {Object} source
- * @return {Promise}
- */
-function explorer_asyncAddListItem(source) {
-    return new Promise((resolve, reject) => {
-
-        source.path = explorer_loadingPath + source.name;
-
-        
-        let secondary_img_src;
-        if (source.playlist_added !== undefined) { // if Audio Player is supported, `source.playlist_added` should be a Boolean value.
-
-            if (source.playlist_added) {
-                secondary_img_src = '/stat/icon/playlist-added.svg';
-            } else {
-                secondary_img_src = '/stat/icon/playlist-add.svg';
-            }
-
-        } else {
-            secondary_img_src = '/stat/icon/vert-more.svg';
-        }
-
-        // create an array of child DOMs for li.
-        let li_childs = [
-            explorer_createQuickDOM('button', {class: 'primary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: `/stat/icon/${source.type}.svg`}, undefined)]),
-            explorer_createQuickDOM('span'  , {class: 'title'}, [document.createTextNode(source.name)]),
-            explorer_createQuickDOM('button', {class: 'secondary-button hitbox'}, [explorer_createQuickDOM('img', {class: 'icon', src: secondary_img_src}, undefined)])
-        ]
-        
-        // take an action when user clicks on filename.
-        li_childs[1].addEventListener('click', explorer_listItem_title_onclickEl);
-        li_childs[2].addEventListener('click', explorer_listItem_secondaryBtn_onclickEl);
-
-
-        // the ITEM!
-        let li = explorer_createQuickDOM('li', {
-            class: 'explorer-item',
-            path: source.path,
-            type: source.type,
-            secured: source.secured
-        }, li_childs);
-
-        if (source.playlist_added !== undefined) {
-            li.setAttribute('playlist-added', source.playlist_added);
-        }
-
-        source.node = li;
-
-
-        // append item to DOM list & Object Virtual list
-        if (source.type == 'folder') {
-            explorer_list_DOM.folder.appendChild(li);
-            explorer_virtual_list.folder.push(source);
-
-        } else {
-            explorer_list_DOM.file.appendChild(li);
-            explorer_virtual_list.file.push(source);
-        }
-        
-        resolve(source);
-    })
-}
 
 
 // list item onClick events
