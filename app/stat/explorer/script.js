@@ -307,6 +307,7 @@ explorer.openDir = function(path) {
                     explorer.openDir(parentPath)
                 }
 
+            header.primaryButton.node.removeEventListener(event, header.primaryButton.currentEl[event]);
             header.primaryButton.node.addEventListener(event, callback);
             header.primaryButton.currentEl[event] = callback;
         }
