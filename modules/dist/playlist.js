@@ -75,7 +75,7 @@ function setPlaylist(clientID, playlistID, playlist) {
         PLAYLIST[clientID] = new Object();
     }
 
-    PLAYLIST[clientId][playlistID] = playlist;
+    PLAYLIST[clientID][playlistID] = playlist;
 
     // Update [playlist.json] asynchronously.
     new Promise((resolve, reject) => {
