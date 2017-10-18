@@ -70,7 +70,12 @@ app.all(driveJsonSection, (req, res) => {
         console.log('not found!', path);
         res.send(null);
         return;
+    } else if (!fs.statSync(path).isDirectory()) {
+        console.log('not a directory!', path);
+        res.send(null);
+        return;
     }
+    
     timer.start('loading!');
 
     let files = fs.readdirSync(path);
@@ -95,6 +100,34 @@ app.all(driveJsonSection, (req, res) => {
     log.create(`<${req.ip}> accessed to [${path}], JSON rendering took ${speed} ms.`);
 })
 
+
+let audioMetadataSection = /^\/audio-meta\//;
+app.all(audioMetadataSection, (req, res) => {
+    var path = getPath(req.path.replace(audioMetadataSection, ''));
+
+    if (fileType(path) != 'audio') {
+        res.send(null);
+        return;
+
+    } else if (!fs.existsSync(path)) {
+        res.send(null);
+        return;
+    }
+    
+    timer.start('loading!');
+
+    let audio = {
+        title: 'title',
+        artist: 'artist',
+        duration: 120
+    }
+    
+    res.send(audio);
+    
+    let speed = timer.end('finished loading');
+    log.create(`<${req.ip}> requested audio metadata [${path}], JSON rendering took ${speed} ms.`);
+})
+
 let playlistSection = /^\/playlist\//;
 app.all(playlistSection, (req, res) => {
     let params = req.path.replace(playlistSection, '').split('/');
@@ -109,11 +142,14 @@ app.all(playlistSection, (req, res) => {
 
     if (playlist.length != 0) {
         pl.setPlaylist(clientID, playlistID, playlist);
+        
+        log.create(`<${req.ip}> (${clientID}) saved playlist (${playlistID}).`);
+
+    } else {
+        log.create(`<${req.ip}> (${clientID}) downloaded playlist (${playlistID}).`);
     }
 
     let content = pl.getPlaylist(clientID, playlistID);
-
-    log.create(`<${req.ip}> (${clientID}) saved playlist (${playlistID}).`);
 
     res.setHeader('Content-Type', 'application/json');
     res.send(content);
