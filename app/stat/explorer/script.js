@@ -193,17 +193,19 @@ explorer.openDir = function(path) {
     // 1. Request directory data to server.
     return explorer.readDir(path)
     .catch(err => {
-        console.log('cancel openDir.');
         explorer.loadingPath = undefined;
-
-        throw err;
+        throw 'Cancel openDir.';
     })
     
     // 2. Parse list.
-    .then(list => explorer.list.parse(list), err => console.log('Skip parsing list', err))
+    .then(list => explorer.list.parse(list), err => err)
 
     // 3. Apply parsed list.
     .then(list => {
+        if (explorer.loadingPath == undefined) {
+            throw list;
+        }
+
         for (let type in list) {
             let listDOM = explorer.list.node[type];
 
@@ -278,7 +280,7 @@ explorer.openDir = function(path) {
             explorer.list[type] = loadingList;
         }
         
-    }, err => console.log('Skip applying parsed list', err))
+    }, err => console.log(err))
 
     // 4. Finish up opening a path.
     .then(() => {
@@ -312,139 +314,29 @@ explorer.openDir = function(path) {
             header.primaryButton.currentEl[event] = callback;
         }
 
-    }, err => console.log(`Failed opening dir [${path}].`, err))
+    }, err => {
+        console.log(err);
+        window.setTimeout(() => {
+            explorer.openDir('/');
+        }, 2000);
+    })
 
-    .catch(err => console.log('Error occured while finishing up opening dir.', err))
-}
-
-
-// Initialize!
-explorer.openDir(explorer.currentPath);
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * Write over an existing list item Asynchronously.
- * 
- * source required key/values:
- * 
- *      source = {
- *          name: 'filename',
- *          type: 'filetype',
- *          secured: 'boolean'
- *      }
- * @param {Number} index
- * @param {Object} source
- * @return {Promise}
- */
-function explorer_asyncWriteOverListItem(index, source) {
-    return new Promise((resolve, reject) => {
-        let listType = source.type == 'folder' ? 'folder' : 'file';
-        
-        let legacy = explorer_virtual_list[listType][index];
-    
-        source.node = legacy.node;
-        source.path = explorer_loadingPath + source.name;
-    
-        // write over an item in virtual list.
-        explorer_virtual_list[listType][index] = source;
-    
-        // write over an node in list DOM.
-        source.node.setAttribute('path', source.path);
-        source.node.setAttribute('secured', source.secured);
-        source.node.querySelector('.title').innerHTML = source.name;
-
-        // write over detailed parts if type doesn't match.
-        if (listType != 'folder') {
-            source.node.setAttribute('type', source.type);
-            source.node.querySelector('.primary-button img').src = `/stat/icon/${source.type}.svg`;
-
-
-            let secondary_img_src;
-            if (source.playlist_added !== undefined) { // if Audio Player is supported, `source.added` should be a Boolean value.
-
-                if (source.playlist_added) {
-                    secondary_img_src = '/stat/icon/playlist-added.svg';
-                } else {
-                    secondary_img_src = '/stat/icon/playlist-add.svg';
-                }
-                source.node.setAttribute('playlist-added', source.playlist_added);
-
-            } else {
-                secondary_img_src = '/stat/icon/vert-more.svg';
-                source.node.removeAttribute('playlist-added');
-            }
-
-            source.node.querySelector('.secondary-button img').src = secondary_img_src;
-        }
-        
-
-        resolve(source);
+    .catch(err => {
+        console.log(err);
     })
 }
 
 
 
-// list item onClick events
-function explorer_listItem_title_onclickEl(evt) {
-    let target = evt.currentTarget.parentNode;
+// Initialize!
+explorer.openDir(explorer.currentPath);
 
-    let file = {
-        type: target.getAttribute('type'),
-        path: target.getAttribute('path'),
-        secured: target.getAttribute('secured') == 'true'
-    }
-
-    if (file.secured) {
-        console.log(`You cannot access to [${file.path}]`);
+// on back button click
+window.onpopstate = () => {
+    if (explorer.currentPath == '/') {
         return;
     }
 
-    if (file.type == 'folder') {
-        // open dir.
-        explorer_asyncOpenDir(file.path);
-    } else {
-        // open file.
-        if (confirm(`download file: \n[${file.path.match(/[^/]+$/)[0]}]?`)) {
-            window.open(`/stream${file.path}`);
-        }
-    }
+    let path = explorer.currentPath.replace(/[^/]+\/$/, '');
+    explorer.openDir(path);
 }
-function explorer_listItem_secondaryBtn_onclickEl(evt) {
-    let target = evt.currentTarget.parentNode;
-    
-    let file = {
-        type: target.getAttribute('type'),
-        path: target.getAttribute('path'),
-        secured: target.getAttribute('secured') == 'true'
-    }
-
-    if (isAudioPlayerSupported && !file.secured && file.type == 'audio') {
-        if (target.getAttribute('playlist-added') == 'true') {
-            
-            audio_removeSongFromPlaylist(file.path);
-            target.querySelector('.secondary-button img').src = '/stat/icon/playlist-add.svg';
-            target.setAttribute('playlist-added', 'false');
-
-        } else {
-            audio_queueSongToPlaylist(file.path);
-            target.querySelector('.secondary-button img').src = '/stat/icon/playlist-added.svg';
-            target.setAttribute('playlist-added', 'true');
-        }
-
-    } else {
-        // Info about folder/file
-        console.log('info!');
-    }
-}
-
