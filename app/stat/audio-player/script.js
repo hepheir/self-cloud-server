@@ -3,21 +3,58 @@ var audio = {
         playlist: 'default',
         index: 0
     },
-    player: undefined,
-    playlist: new Object(),
+    player: {
+        node: document.getElementById('audio-player')
+    },
+    playlist: {
+        node: undefined,
+        list: new Object,
 
+        download: undefined, // Function
+        upload: undefined, // Function
+
+        queue: undefined, // Function
+        remove: undefined // Function
+    },
+
+    getMetadata: undefined, // Function
+
+    option: {
+        shuffle: false,
+        loop: true
+    }    
 }
 
-var audio_autoPlay = false;
+audio.getMetadata = function(path) {
+    let xhr = new XMLHttpRequest();
+    return new Promise((resolve, reject) => {
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                resolve(xhr.response);
+            }
+        }
 
-const audio_player = document.getElementById('audio-player');
+        xhr.open('get', `/audio-meta${path}`, true);
+        xhr.responseType = 'json';
+        xhr.send();
+    })
+    .then(responseData => {
+        if (responseData !== null) {
+            return responseData;
 
+        } else {
+            throw 'No meta data found.';
+        }
+    })
+}
 
-
-audio.downloadPlaylist = function(playlistID) {
-    let clientID = 'guest';
+audio.playlist.download = function(playlistID) {
+    
+    let clientID;
     if (typeof user !== undefined) {
         clientID = user.id;
+    } else {
+        clientID = 'guest';
     }
 
     let xhr = new XMLHttpRequest();
@@ -33,32 +70,33 @@ audio.downloadPlaylist = function(playlistID) {
     })
     .then(responseData => {
         if (Array.isArray(responseData)) {
-            audio.playlist[playlistID] = responseData;
+            audio.playlist.list[playlistID] = responseData;
             return responseData;
 
         } else {
-            console.log(`Downloaded playlist is not an Array?!`, responseData);
-            throw 'Error';
+            throw 'Downloaded playlist is not an Array?!';
         }
     })
 }
 
-audio.uploadPlaylist = function(playlistID) {
-    if (!audio.playlist[playlistID]) {
+audio.playlist.upload = function(playlistID) {
+    
+    let playlist = audio.playlist.list[playlistID];
+    if (!playlist) {
         return null;
     }
 
-    let clientID = 'guest';
+    let clientID;
     if (typeof user !== undefined) {
         clientID = user.id;
+    } else {
+        clientID = 'guest';
     }
-
-    let playlist = audio.playlist[playlistID];
     
     // encodeURIComponent before sending data to server.
     clientID   = encodeURIComponent(clientID);
     playlistID = encodeURIComponent(playlistID);
-    playlist = playlist.map(encodeURIComponent).join('&');
+    playlistURI = playlist.map(encodeURIComponent).join('&');
 
     let xhr = new XMLHttpRequest();
     return new Promise((resolve, reject) => {
@@ -67,7 +105,7 @@ audio.uploadPlaylist = function(playlistID) {
                 resolve(xhr.response);
             }
         }
-        xhr.open('get', `/playlist/${clientID}/${playlistID}/?${playlist}`, true);
+        xhr.open('get', `/playlist/${clientID}/${playlistID}/?${playlistURI}`, true);
         xhr.responseType = 'json';
         xhr.send();
     })
@@ -82,92 +120,44 @@ audio.uploadPlaylist = function(playlistID) {
     })
 }
 
-audio.
-
-
-audio_asyncLoadPlaylist(clientID)
-    .then(playlist => {
-        isAudioPlayerSupported = true;
-        explorer_asyncOpenDir(explorer_currentPath); // From explorer
-        
-        audio_playlist = playlist;
-        
-        audio_player.addEventListener('loadeddata', audio_onLoadedData);
-        audio_player.addEventListener('ended', audio_onEnded);
-
-        if (playlist.length != 0) {
-            audio_load(0);
-        }
-        audio_nowPlaying = 0;
-    })
-
+audio.playlist.queue = function(playlistID, index, path){
+    audio.getMetadata(path)
+    .then(metadata => {
+        let playlist = new Array();
     
-
-function audio_load(index) {
-    audio_player.src = `/stream${audio_playlist[index]}`;
-}
-
-function audio_onLoadedData(evt) {
-    let player = evt.currentTarget;
-
-    player.currentTime = 0;
-    // player.currentTime = player.duration - 8;
-    if (audio_autoPlay) {
-        console.log('now Playing: ', audio_playlist[audio_nowPlaying].match(/[^/]+$/)[0]);
-        player.play();
-    }
-}
-
-function audio_onEnded() {
-    // Option.
-    audio_autoPlay = true;
-
-    let queueIndex = audio_nowPlaying + 1;
-    if (queueIndex >= audio_playlist.length)
-        queueIndex = 0;
-
-    audio_load(queueIndex);
-    audio_player.load();
-
-    audio_nowPlaying = queueIndex;
+        for (let i = 0; i < audio.playlist.list[playlistID].length + 1; i++) {
+            if (i == index) {
+                playlist.push(metadata);
+            }
+            else if (i > index) {
+                playlist.push(audio.playlist.list[playlistID][i - 1]);
+            }
+            else {
+                playlist.push(audio.playlist.list[playlistID][i]);
+            }
+        }
+    }, err => console.log(err));
 }
 
 
-function audio_queueSongToPlaylist(path) {
-    audio_playlist.push(path);
-    audio_asyncSynchronizePlaylistWithServer(clientID)
-    console.log('[Queued] playlist updated:', audio_playlist);
+// // intensed area
 
-}
-function audio_removeSongFromPlaylist(path) {
-    audio_playlist = audio_playlist.filter(src => {
-        return path != src;
-    });
-    audio_asyncSynchronizePlaylistWithServer(clientID);
-    console.log('[Removed] playlist updated:', audio_playlist);
-}
+// audio.playlist.download('default');
 
+// var audioCtx = new AudioContext();
 
+// var hey = new Audio();
 
-// intensed area
+// var aud_source = audioCtx.createMediaElementSource(hey);
+// aud_source.connect(audioCtx.destination);
 
+// document.getElementById('audio-snackbar__action').onclick = evt => {
+//     evt.currentTarget.parentNode.style.display = 'none';
 
-var audioCtx = new AudioContext();
-
-var hey = new Audio();
-hey.src = audio_playlist[0];
-
-var aud_source = audioCtx.createMediaElementSource(audio_player);
-aud_source.connect(audioCtx.destination);
-
-document.getElementById('audio-snackbar__action').onclick = evt => {
-    evt.currentTarget.parentNode.style.display = 'none';
-
-    let audio = audio_player;
-    console.log('now Playing: ', audio_playlist[audio_nowPlaying].match(/[^/]+$/)[0]);
-    audio.play();
-    return audio.paused;
-};
+//     console.log(audio.playlist.list);
+//     hey.src = '/stream' + audio.playlist.list.default[0];
+//     hey.play();
+// };
 
 
 
