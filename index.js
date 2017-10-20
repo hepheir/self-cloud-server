@@ -133,19 +133,24 @@ app.all(playlistSection, (req, res) => {
     let params = req.path.replace(playlistSection, '').split('/');
 
     let clientID = params[0],
-        playlistID = params[1],
-        playlist = new Array();
+        playlistID = params[1];
 
-    for (let src in req.query) {
-        playlist.push(src);
-    }
+    if ('save' in req.query) {
+        let playlist = new Array();
 
-    if (playlist.length != 0) {
+        for (let src in req.query) {
+            if (src == 'save') {
+                continue;
+            }
+            playlist.push(decodeURIComponent(src));
+        }
+
         pl.setPlaylist(clientID, playlistID, playlist);
         
         log.create(`<${req.ip}> (${clientID}) saved playlist (${playlistID}).`);
 
-    } else {
+    }
+    else {
         log.create(`<${req.ip}> (${clientID}) downloaded playlist (${playlistID}).`);
     }
 
