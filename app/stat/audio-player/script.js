@@ -17,13 +17,77 @@ class AudioPlayer {
             default: new Array()
         };
         this.option = {
+            autoplay: true,
             shuffle: false,
             loop: true
         };
 
+        this.initialize = this.initialize.bind(this);
         this.downloadPlaylist = this.downloadPlaylist.bind(this);
         this.uploadPlaylist = this.uploadPlaylist.bind(this);
         this.queuePlaylist = this.queuePlaylist.bind(this);
+
+        this.initialize();
+    }
+
+    initialize() {
+        this.downloadPlaylist('default')
+            .then(playlist => {
+                this.playlist['default'] = playlist;
+
+                if (this.option.autoplay) {
+                    this.player[0].src = `/stream${this.playlist['default'][0]}`;
+                    this.player[0].load();
+                    this.player[0].play();
+
+                    if (!this.playlist['default'][1]) {
+                        return;
+                    }
+
+                    this.player[1].src = `/stream${this.playlist['default'][1]}`;
+                    this.player[1].load();
+                }
+            })
+
+        for (let i = 0; i < 2; i++) {
+            this.player[i].addEventListener('ended', evt => {
+                let currentPlayer, theOtherPlayer, currentPlaylist;
+
+                currentPlaylist = this.playlist[this.status.playlist];
+
+                if (this.status.player == 0) {
+                    currentPlayer = this.player[0];
+                    theOtherPlayer = this.player[1];
+
+                    this.status.player = 1;
+                }
+                else {
+                    currentPlayer = this.player[1];
+                    theOtherPlayer = this.player[0];
+
+                    this.status.player = 0;
+                }
+
+                theOtherPlayer.play();
+
+                this.status.index++;
+
+                let queueIndex = this.status.index + 1;
+                if (currentPlaylist.length == queueIndex) {
+                    queueIndex = 0;
+                }
+                else if (currentPlaylist.length < queueIndex) {
+                    this.status.index = 0;
+                    queueIndex = 1;
+
+                    if (currentPlaylist.length == 1) {queueIndex = 0}
+                }
+                currentPlayer.src = `/stream${currentPlaylist[queueIndex]}`;
+                currentPlayer.currentTime = 0;
+                currentPlayer.load();
+            })
+        }
+
     }
 
     downloadMetadata(path) {
@@ -122,16 +186,26 @@ class AudioPlayer {
             xhr.responseType = 'json';
             xhr.send();
         })
-        // 4. Check if the uploading was successful.
+        // 4. Throw an Error if there was a problem.
         .then(res => {
-            if (res == this.playlist[playlistID]) {
-                console.log('Playlist successfully uploaded.');
-                return res;
+            if (!res) {
+                throw 'Server did not response. Idk whether uploading playlist was successful or not.';
             }
-            else {
+
+            if (res.length != this.playlist[playlistID].length) {
                 console.log(res, this.playlist[playlistID]);
                 throw `Sent playlist doesn't match with received playlist`;
             }
+
+            for (let i = 0; i < res.length; i++) {
+                if (res[i] != this.playlist[playlistID][i]) {
+                    console.log(res, this.playlist[playlistID]);
+                    throw `Sent playlist doesn't match with received playlist`;
+                }
+            }
+
+            console.log('Playlist successfully uploaded.');
+            return res;
         })
     }
 
@@ -163,36 +237,24 @@ class AudioPlayer {
         }
 
         // Update Playlist.
-        this.downloadMetadata(path)
-        .then(metadata => {
-            let newPlaylist = new Array();
-
-            for (let i = 0; i < this.playlist[playlistID].length + 1; i++) {
-                if (i == index) {
-                    newPlaylist.push(metadata);
-                }
-                else if (i < index) {
-                    newPlaylist.push(this.playlist[playlistID][i]);
-                }
-                else if (i > index) {
-                    newPlaylist.push(this.playlist[playlistID][i - 1]);
-                }
+        let newPlaylist = new Array();
+        
+        for (let i = 0; i < this.playlist[playlistID].length + 1; i++) {
+            if (i == index) {
+                newPlaylist.push(path);
             }
-        })
+            else if (i < index) {
+                newPlaylist.push(this.playlist[playlistID][i]);
+            }
+            else if (i > index) {
+                newPlaylist.push(this.playlist[playlistID][i - 1]);
+            }
+        }
+
+        this.playlist[playlistID] = newPlaylist;
     }
 }
-
-
-// Initialize
-
 var audio = new AudioPlayer();
-
-audio.downloadPlaylist('default')
-.then(playlist => {
-    for (let i = 0; i < playlist.length; i++) {
-        audio.queuePlaylist('default', i, playlist[i]);
-    }
-})
 
 
 // // intensed area
