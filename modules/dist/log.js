@@ -1,7 +1,6 @@
 'use strict';
 
-const fs = require('fs')
-    , date = new Date();
+const fs = require('fs');
 
 var LASTEST_LOG = '';
 
@@ -19,6 +18,7 @@ module.exports.create = create;
 // FUNCTIONS
 
 function setLogPath(path) {
+    let date = new Date();
     LOG_PATH = path;
     
     if (!fs.existsSync(path)) {
@@ -42,6 +42,7 @@ function create(message) {
         addition = '*';
 
     } else {
+        let date = new Date();
         addition = `\n[${date.toLocaleString()}] ${message} `;
 
         console.log(message);
