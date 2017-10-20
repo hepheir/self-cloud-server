@@ -66,15 +66,12 @@ class AudioPlayer {
             theOtherPlayer = this.status.player == 0 ? this.player[1] : this.player[0];
 
         if (this.option.preload) {
-            let queueIndex;
+            let queueIndex = this.status.index + 2;
 
-            if (currentPlaylist.length > queueIndex) {
-                queueIndex = this.status.index + 2
-            }
-            else if (currentPlaylist.length == queueIndex || currentPlaylist.length == 1) {
+            if (currentPlaylist.length == queueIndex || currentPlaylist.length == 1) {
                 queueIndex = 0;
             }
-            else {
+            else if (currentPlaylist.length < queueIndex) {
                 queueIndex = 1;
             }
 
@@ -108,7 +105,7 @@ class AudioPlayer {
                 this.status.preloaded[this.status.player] = false;
             }
             else {
-                theOtherPlayer.src = currentPlaylist[this.status.index];
+                theOtherPlayer.src = `/stream${currentPlaylist[this.status.index]}`;
                 theOtherPlayer.load();
                 theOtherPlayer.play();
             }
