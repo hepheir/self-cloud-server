@@ -1,143 +1,198 @@
-var audio = {
-    status: {
-        playlist: 'default',
-        index: 0
-    },
-    player: {
-        node: document.getElementById('audio-player')
-    },
-    playlist: {
-        node: undefined,
-        list: new Object,
+'use strict';
 
-        download: undefined, // Function
-        upload: undefined, // Function
+class AudioPlayer {
+    constructor() {
+        this.status = {
+            playlist: 'default',
+            index: 0,
+            player: 0
+        };
+        this.player = {
+            node: undefined,
+            0: new Audio(),
+            1: new Audio()
+        };
+        this.playlist = {
+            node: undefined,
+            default: new Array()
+        };
+        this.option = {
+            shuffle: false,
+            loop: true
+        };
 
-        queue: undefined, // Function
-        remove: undefined // Function
-    },
-
-    getMetadata: undefined, // Function
-
-    option: {
-        shuffle: false,
-        loop: true
-    }    
-}
-
-audio.getMetadata = function(path) {
-    let xhr = new XMLHttpRequest();
-    return new Promise((resolve, reject) => {
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                resolve(xhr.response);
-            }
-        }
-
-        xhr.open('get', `/audio-meta${path}`, true);
-        xhr.responseType = 'json';
-        xhr.send();
-    })
-    .then(responseData => {
-        if (responseData !== null) {
-            return responseData;
-
-        } else {
-            throw 'No meta data found.';
-        }
-    })
-}
-
-audio.playlist.download = function(playlistID) {
-    
-    let clientID;
-    if (typeof user !== undefined) {
-        clientID = user.id;
-    } else {
-        clientID = 'guest';
+        this.downloadPlaylist = this.downloadPlaylist.bind(this);
+        this.uploadPlaylist = this.uploadPlaylist.bind(this);
+        this.queuePlaylist = this.queuePlaylist.bind(this);
     }
 
-    let xhr = new XMLHttpRequest();
-    return new Promise((resolve, reject) => {
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                resolve(xhr.response);
+    downloadMetadata(path) {
+        // 1. Request source meta data from server.
+        let xhr = new XMLHttpRequest();
+        return new Promise((resolve, reject) => {
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    resolve(xhr.response);
+                }
             }
-        }
-        xhr.open('get', `/playlist/${clientID}/${playlistID}/`, true);
-        xhr.responseType = 'json';
-        xhr.send();
-    })
-    .then(responseData => {
-        if (Array.isArray(responseData)) {
-            audio.playlist.list[playlistID] = responseData;
-            return responseData;
-
-        } else {
-            throw 'Downloaded playlist is not an Array?!';
-        }
-    })
-}
-
-audio.playlist.upload = function(playlistID) {
-    
-    let playlist = audio.playlist.list[playlistID];
-    if (!playlist) {
-        return null;
-    }
-
-    let clientID;
-    if (typeof user !== undefined) {
-        clientID = user.id;
-    } else {
-        clientID = 'guest';
-    }
-    
-    // encodeURIComponent before sending data to server.
-    clientID   = encodeURIComponent(clientID);
-    playlistID = encodeURIComponent(playlistID);
-    playlistURI = playlist.map(encodeURIComponent).join('&');
-
-    let xhr = new XMLHttpRequest();
-    return new Promise((resolve, reject) => {
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                resolve(xhr.response);
-            }
-        }
-        xhr.open('get', `/playlist/${clientID}/${playlistID}/?${playlistURI}`, true);
-        xhr.responseType = 'json';
-        xhr.send();
-    })
-    .then(responseData => {
-        if (responseData == playlist) {
-            console.log('Playlist successfully uploaded.');
-            return responseData;
-        } else {
-            console.log(`Sent playlist doesn't match with received playlist`);
-            throw 'Error';
-        }
-    })
-}
-
-audio.playlist.queue = function(playlistID, index, path){
-    audio.getMetadata(path)
-    .then(metadata => {
-        let playlist = new Array();
-    
-        for (let i = 0; i < audio.playlist.list[playlistID].length + 1; i++) {
-            if (i == index) {
-                playlist.push(metadata);
-            }
-            else if (i > index) {
-                playlist.push(audio.playlist.list[playlistID][i - 1]);
+            xhr.open('get', `/audio-meta${path}`, true);
+            xhr.responseType = 'json';
+            xhr.send();
+        })
+        // 2. Throw an error if we didn't get what we want.
+        .then(res => {
+            if (res !== null) {
+                return res;
             }
             else {
-                playlist.push(audio.playlist.list[playlistID][i]);
+                throw 'No meta data found.';
             }
+        })
+    }
+
+    downloadPlaylist(playlistID) {
+        if (playlistID == 'node') {throw 'playlistID should not be `node`. please choose another name.'}
+
+        // 1. Set client ID.
+        let clientID;
+        if (typeof user !== undefined) { // Check if module user has loaded.
+            clientID = user.id;
         }
-    }, err => console.log(err));
+        else {
+            clientID = 'guest';
+        }
+        // 2. Request playlist data from server.
+        let xhr = new XMLHttpRequest();
+        return new Promise((resolve, reject) => {
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    resolve(xhr.response);
+                }
+            }
+            xhr.open('get', `/playlist/${clientID}/${playlistID}/`, true);
+            xhr.responseType = 'json';
+            xhr.send();
+        })
+        // 3. Sync local playlist with received playlist.
+        .then(res => {
+            if (Array.isArray(res)) {
+                this.playlist[playlistID] = res;
+            }
+            else if (res === null) {
+                this.playlist[playlistID] = new Array();
+            }
+            else {
+                console.log(res);
+                throw 'Unexpected response data.';
+            }
+            return res;
+        })
+    }
+    
+    uploadPlaylist(playlistID) {
+        if (playlistID == 'node') {throw 'playlistID should not be `node`. please choose another name.'}
+
+        // 1. Set client ID.
+        let clientID;
+        if (typeof user !== undefined) { // Check if module user has loaded.
+            clientID = user.id;
+        }
+        else {
+            clientID = 'guest';
+        }
+        
+        // 2. Prepare for AJAX request.
+        let playlistURI;
+        if (this.playlist[playlistID]) {
+            playlistURI = this.playlist[playlistID].map(encodeURIComponent).join('&');
+        }
+        else {
+            playlistURI = '';
+        }
+
+        // 3. Upload playlist data to server.
+        let xhr = new XMLHttpRequest();
+        return new Promise((resolve, reject) => {
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    resolve(xhr.response);
+                }
+            }
+            xhr.open('get', `/playlist/${clientID}/${playlistID}?save&${playlistURI}`, true);
+            xhr.responseType = 'json';
+            xhr.send();
+        })
+        // 4. Check if the uploading was successful.
+        .then(res => {
+            if (res == this.playlist[playlistID]) {
+                console.log('Playlist successfully uploaded.');
+                return res;
+            }
+            else {
+                console.log(res, this.playlist[playlistID]);
+                throw `Sent playlist doesn't match with received playlist`;
+            }
+        })
+    }
+
+    queuePlaylist(playlistID, index, path) {
+        let isPlayed = this.status.playlist == playlistID;
+
+        let currentPlayer = this.player[this.status.player];
+
+        let theOtherPlayer;
+        if (this.status.player == 0) {
+            theOtherPlayer = this.player[1];
+        }
+        else {
+            theOtherPlayer = this.player[0];
+        }
+
+        // Play queued song right now.
+        if (isPlayed && this.status.index == index) {
+            currentPlayer.src = `/stream${path}`;
+            currentPlayer.load();
+            currentPlayer.currentTime = 0;
+            currentPlayer.play();
+            
+        }
+        // Preload queued song.
+        else if (isPlayed && this.status.index + 1 == index) {
+            theOtherPlayer.src = `/stream${path}`;
+            theOtherPlayer.load();
+        }
+
+        // Update Playlist.
+        this.downloadMetadata(path)
+        .then(metadata => {
+            let newPlaylist = new Array();
+
+            for (let i = 0; i < this.playlist[playlistID].length + 1; i++) {
+                if (i == index) {
+                    newPlaylist.push(metadata);
+                }
+                else if (i < index) {
+                    newPlaylist.push(this.playlist[playlistID][i]);
+                }
+                else if (i > index) {
+                    newPlaylist.push(this.playlist[playlistID][i - 1]);
+                }
+            }
+        })
+    }
 }
+
+
+// Initialize
+
+var audio = new AudioPlayer();
+
+audio.downloadPlaylist('default')
+.then(playlist => {
+    for (let i = 0; i < playlist.length; i++) {
+        audio.queuePlaylist('default', i, playlist[i]);
+    }
+})
 
 
 // // intensed area
