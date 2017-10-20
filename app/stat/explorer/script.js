@@ -107,6 +107,9 @@ explorer.list.createNodes = function(filedata) {
                 if (filedata.type == 'folder') {
                     explorer.openDir(filedata.path);
                 }
+                else if (filedata.type == 'audio' && typeof audio !== undefined) {
+                    audio.queuePlaylist(audio.status.playlist, audio.status.index, filedata.path);
+                }
             };
 
         filedata.title.node.addEventListener(event, callback);
