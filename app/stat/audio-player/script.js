@@ -5,7 +5,11 @@ class AudioPlayer {
         this.status = {
             playlist: 'default',
             index: 0,
-            player: 0
+            player: 0,
+            preloaded: {
+                0: false,
+                1: false
+            }
         };
         this.player = {
             node: undefined,
@@ -17,12 +21,15 @@ class AudioPlayer {
             default: new Array()
         };
         this.option = {
+            preload: true,
             autoplay: true,
+            autosave: true,
             shuffle: false,
             loop: true
         };
 
         this.initialize = this.initialize.bind(this);
+        this.onPlayerEnded = this.onPlayerEnded.bind(this);
         this.downloadPlaylist = this.downloadPlaylist.bind(this);
         this.uploadPlaylist = this.uploadPlaylist.bind(this);
         this.queuePlaylist = this.queuePlaylist.bind(this);
@@ -35,59 +42,78 @@ class AudioPlayer {
             .then(playlist => {
                 this.playlist['default'] = playlist;
 
+                this.player[0].src = `/stream${this.playlist['default'][0]}`;
+                this.player[0].load();
+
                 if (this.option.autoplay) {
-                    this.player[0].src = `/stream${this.playlist['default'][0]}`;
-                    this.player[0].load();
                     this.player[0].play();
+                }
 
-                    if (!this.playlist['default'][1]) {
-                        return;
-                    }
-
+                if (this.option.preload && this.playlist['default'].length > 1) {
                     this.player[1].src = `/stream${this.playlist['default'][1]}`;
                     this.player[1].load();
                 }
             })
 
         for (let i = 0; i < 2; i++) {
-            this.player[i].addEventListener('ended', evt => {
-                let currentPlayer, theOtherPlayer, currentPlaylist;
+            this.player[i].addEventListener('ended', this.onPlayerEnded);
+        }
+    }
 
-                currentPlaylist = this.playlist[this.status.playlist];
+    onPlayerEnded(evt) {
+        let currentPlaylist = this.playlist[this.status.playlist],
+            currentPlayer = this.player[this.status.player],
+            theOtherPlayer = this.status.player == 0 ? this.player[1] : this.player[0];
 
-                if (this.status.player == 0) {
-                    currentPlayer = this.player[0];
-                    theOtherPlayer = this.player[1];
+        if (this.option.preload) {
+            let queueIndex;
 
-                    this.status.player = 1;
-                }
-                else {
-                    currentPlayer = this.player[1];
-                    theOtherPlayer = this.player[0];
+            if (currentPlaylist.length > queueIndex) {
+                queueIndex = this.status.index + 2
+            }
+            else if (currentPlaylist.length == queueIndex || currentPlaylist.length == 1) {
+                queueIndex = 0;
+            }
+            else {
+                queueIndex = 1;
+            }
 
-                    this.status.player = 0;
-                }
+            currentPlayer.src = `/stream${currentPlaylist[queueIndex]}`;
+            currentPlayer.currentTime = 0;
+            currentPlayer.load();
 
-                theOtherPlayer.play();
-
-                this.status.index++;
-
-                let queueIndex = this.status.index + 1;
-                if (currentPlaylist.length == queueIndex) {
-                    queueIndex = 0;
-                }
-                else if (currentPlaylist.length < queueIndex) {
-                    this.status.index = 0;
-                    queueIndex = 1;
-
-                    if (currentPlaylist.length == 1) {queueIndex = 0}
-                }
-                currentPlayer.src = `/stream${currentPlaylist[queueIndex]}`;
-                currentPlayer.currentTime = 0;
-                currentPlayer.load();
-            })
+            this.status.preloaded[this.status.player] = true;
         }
 
+
+        // Play next song on demand.
+        if (this.option.autoplay) {
+            this.status.index++;
+
+            // as we reach the end...
+            if (currentPlaylist.length <= this.status.index) {
+                this.status.index = 0;
+
+                // Stop playing songs, if user disabled loop option.
+                if (!this.option.loop) {
+                    return;
+                }
+            }
+
+
+            this.status.player = this.status.player == 0 ? 1 : 0;
+
+            if (this.status.preloaded[this.status.player]) {
+                theOtherPlayer.play();
+                this.status.preloaded[this.status.player] = false;
+            }
+            else {
+                theOtherPlayer.src = currentPlaylist[this.status.index];
+                theOtherPlayer.load();
+                theOtherPlayer.play();
+            }
+
+        }
     }
 
     downloadMetadata(path) {
@@ -212,29 +238,32 @@ class AudioPlayer {
     queuePlaylist(playlistID, index, path) {
         let isPlayed = this.status.playlist == playlistID;
 
-        let currentPlayer = this.player[this.status.player];
+        // Are we editing a playlist that is being played at this moment?
+        if (this.status.playlist == playlistID) {
 
-        let theOtherPlayer;
-        if (this.status.player == 0) {
-            theOtherPlayer = this.player[1];
-        }
-        else {
-            theOtherPlayer = this.player[0];
-        }
+            let currentPlayer = this.player[this.status.player],
+                theOtherPlayer = this.status.player == 0 ? this.player[1] : this.player[0];
 
-        // Play queued song right now.
-        if (isPlayed && this.status.index == index) {
-            currentPlayer.src = `/stream${path}`;
-            currentPlayer.load();
-            currentPlayer.currentTime = 0;
-            currentPlayer.play();
-            
+            // Play queued song right now.
+            if (this.status.index == index) {
+                currentPlayer.src = `/stream${path}`;
+                currentPlayer.currentTime = 0;
+                currentPlayer.load();
+                currentPlayer.play();
+
+                this.status.preloaded[this.status.player] = false;
+            }
+            // Preload queued song on demand.
+            else if (this.option.preload && this.status.index + 1 == index) {
+                theOtherPlayer.src = `/stream${path}`;
+                theOtherPlayer.currentTime = 0;
+                theOtherPlayer.load();
+
+                let a = this.status.player == 0 ? 1 : 0;
+                this.status.preloaded[a] = true;
+            }
         }
-        // Preload queued song.
-        else if (isPlayed && this.status.index + 1 == index) {
-            theOtherPlayer.src = `/stream${path}`;
-            theOtherPlayer.load();
-        }
+        
 
         // Update Playlist.
         let newPlaylist = new Array();
@@ -252,6 +281,12 @@ class AudioPlayer {
         }
 
         this.playlist[playlistID] = newPlaylist;
+
+
+        // Save playlist automatically on demand!
+        if (this.option.autosave) {
+            this.uploadPlaylist(playlistID);
+        }
     }
 }
 var audio = new AudioPlayer();
