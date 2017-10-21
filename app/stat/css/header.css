@@ -98,26 +98,6 @@ body {
     flex-shrink: 0;
 }
 
-/* SVG path */
-.primary-button .checkbox-checked,
-.primary-button .checkbox-outline,
-.primary-button .checkbox-indeterminated,
-.primary-button .home,
-.primary-button .arrow-back {opacity: 0;}
-
-[root="true"][select-mode="false"] .primary-button .home {opacity: 1;}
-[root="false"][select-mode="false"] .primary-button .arrow-back {opacity: 1;}
-
-[select-mode="true"] .primary-button .checkbox-outline,
-[select-mode="true"] .primary-button .checkbox-indeterminated {opacity: 1;}
-
-[select-mode="true"][selected-items="0"] .header .primary-button .checkbox-checked,
-[select-mode="true"][selected-items="0"] .header .primary-button .checkbox-indeterminated {opacity: 0;}
-
-[select-mode="true"][selected-items="max"] .header .primary-button .checkbox-checked {opacity: 1;}
-[select-mode="true"][selected-items="max"] .header .primary-button .checkbox-indeterminated {opacity: 0;}
-
-
 .header .title {
     width: 100%;
 
