@@ -93,6 +93,11 @@ app.all(driveJsonSection, (req, res) => {
 
         return file;
     })
+
+    // Temporal action to prevent mac OS hidden file from showing.
+    files = files.filter(f => {
+        return !f.name.includes('._');
+    })
     
     res.send(files);
     
