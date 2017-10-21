@@ -89,14 +89,4 @@ var timer = {
 	}
 }
 
-// Lab option
-let event = 'click',
-	callback = function(evt) {
-		if (typeof audio !== undefined) {
-			audio.player[audio.status.player].currentTime = 9999;
-		}
-	};
-
-header.secondaryButton.node.addEventListener(event, callback);
-header.secondaryButton.currentEl[event] = callback;
 </script>
