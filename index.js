@@ -143,11 +143,11 @@ app.all(playlistSection, (req, res) => {
     if ('save' in req.query) {
         let playlist = new Array();
 
-        for (let src in req.query) {
-            if (src == 'save') {
+        for (let key in req.query) {
+            if (key == 'save') {
                 continue;
             }
-            playlist.push(decodeURIComponent(src));
+            playlist.push(decodeURIComponent(req.query[key]));
         }
 
         pl.setPlaylist(clientID, playlistID, playlist);

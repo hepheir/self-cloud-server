@@ -40,6 +40,7 @@ class AudioPlayer {
         };
 
         this.initialize = this.initialize.bind(this);
+        this.onPrevButtonClick = this.onPrevButtonClick.bind(this);
         this.onPlayButtonClick = this.onPlayButtonClick.bind(this);
         this.onPlayerEnded = this.onPlayerEnded.bind(this);
         this.play = this.play.bind(this);
@@ -72,8 +73,30 @@ class AudioPlayer {
             this.player[i].addEventListener('ended', this.onPlayerEnded);
         }
 
+        this.player.node.prev.addEventListener('click', this.onPrevButtonClick);
         this.player.node.play.addEventListener('click', this.onPlayButtonClick);
         this.player.node.next.addEventListener('click', this.onPlayerEnded);
+    }
+
+    onPrevButtonClick(evt) {
+        let player = this.player[this.status.player];
+
+        
+        if (player.currentTime < 5) {
+            player.pause();
+            
+            let theOtherPlayerID = this.status.player == 0 ? 1 : 0;
+            let prevIndex;
+            if (this.status.index == 0) {
+                prevIndex = this.playlist[this.status.playlist].length - 1;
+            }
+            else {
+                prevIndex = this.status.index - 1;
+            }
+            this.play(theOtherPlayerID, prevIndex);
+
+        }
+        player.currentTime = 0;
     }
 
     onPlayButtonClick(evt) {
@@ -238,7 +261,8 @@ class AudioPlayer {
         // 2. Prepare for AJAX request.
         let playlistURI;
         if (this.playlist[playlistID]) {
-            playlistURI = this.playlist[playlistID].map(encodeURIComponent).join('&');
+            let i = 0;
+            playlistURI = this.playlist[playlistID].map(encodeURIComponent).map(path => `id_${i++}=${path}`).join('&');
         }
         else {
             playlistURI = '';
@@ -264,12 +288,12 @@ class AudioPlayer {
 
             if (res.length != this.playlist[playlistID].length) {
                 console.log(res, this.playlist[playlistID]);
-                throw `Sent playlist doesn't match with received playlist`;
+                throw `Sent playlist doesn't match with received playlist. (length is not equal)`;
             }
 
             for (let i = 0; i < res.length; i++) {
                 if (res[i] != this.playlist[playlistID][i]) {
-                    console.log(res, this.playlist[playlistID]);
+                    console.log(res[i], this.playlist[playlistID][i]);
                     throw `Sent playlist doesn't match with received playlist`;
                 }
             }
