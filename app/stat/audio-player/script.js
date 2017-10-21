@@ -12,7 +12,18 @@ class AudioPlayer {
             }
         };
         this.player = {
-            node: undefined,
+            node: {
+                primaryTitle: document.getElementById('audio-primary-title'),
+                secondaryTitle: document.getElementById('audio-secondary-title'),
+
+                prev: document.getElementById('audio-prev'),
+
+                play: document.getElementById('audio-play'),
+                playIcon: document.getElementById('audio-play-icon'),
+
+                next: document.getElementById('audio-next')
+            },
+
             0: new Audio(),
             1: new Audio()
         };
@@ -29,7 +40,10 @@ class AudioPlayer {
         };
 
         this.initialize = this.initialize.bind(this);
+        this.onPlayButtonClick = this.onPlayButtonClick.bind(this);
         this.onPlayerEnded = this.onPlayerEnded.bind(this);
+        this.play = this.play.bind(this);
+        this.preload = this.preload.bind(this);
         this.downloadPlaylist = this.downloadPlaylist.bind(this);
         this.uploadPlaylist = this.uploadPlaylist.bind(this);
         this.queuePlaylist = this.queuePlaylist.bind(this);
@@ -42,75 +56,108 @@ class AudioPlayer {
             .then(playlist => {
                 this.playlist['default'] = playlist;
 
-                this.player[0].src = `/stream${this.playlist['default'][0]}`;
-                this.player[0].load();
-
+                this.preload(0, 0);
                 if (this.option.autoplay) {
-                    this.player[0].play();
+                    this.play(0, 0);
                 }
+                
+                this.status.player = 0;
 
                 if (this.option.preload && this.playlist['default'].length > 1) {
-                    this.player[1].src = `/stream${this.playlist['default'][1]}`;
-                    this.player[1].load();
+                    this.preload(1, 1);
                 }
             })
 
         for (let i = 0; i < 2; i++) {
             this.player[i].addEventListener('ended', this.onPlayerEnded);
         }
+
+        this.player.node.play.addEventListener('click', this.onPlayButtonClick);
+        this.player.node.next.addEventListener('click', this.onPlayerEnded);
+    }
+
+    onPlayButtonClick(evt) {
+        let player = this.player[this.status.player];
+        if (player.paused) {
+            player.play();
+            this.player.node.playIcon.src = `${ICON_PATH}pause.svg`;
+        }
+        else {
+            player.pause();
+            this.player.node.playIcon.src = `${ICON_PATH}play.svg`;
+        }
     }
 
     onPlayerEnded(evt) {
+        this.player.node.playIcon.src = `${ICON_PATH}play.svg`;
+
         let currentPlaylist = this.playlist[this.status.playlist],
-            currentPlayer = this.player[this.status.player],
-            theOtherPlayer = this.status.player == 0 ? this.player[1] : this.player[0];
-
-        if (this.option.preload) {
-            let queueIndex = this.status.index + 2;
-
-            if (currentPlaylist.length == queueIndex || currentPlaylist.length == 1) {
-                queueIndex = 0;
-            }
-            else if (currentPlaylist.length < queueIndex) {
-                queueIndex = 1;
-            }
-
-            currentPlayer.src = `/stream${currentPlaylist[queueIndex]}`;
-            currentPlayer.currentTime = 0;
-            currentPlayer.load();
-
-            this.status.preloaded[this.status.player] = true;
-        }
-
-
+            currentPlayerID = this.status.player,
+            nextPlayerID = this.status.player == 0 ? 1 : 0;
         // Play next song on demand.
         if (this.option.autoplay) {
-            this.status.index++;
-
+            let nextIndex = this.status.index + 1;
+            
             // as we reach the end...
-            if (currentPlaylist.length <= this.status.index) {
-                this.status.index = 0;
-
+            if (currentPlaylist.length <= nextIndex) {
+                nextIndex -= currentPlaylist.length;
                 // Stop playing songs, if user disabled loop option.
                 if (!this.option.loop) {
                     return;
                 }
             }
 
-
-            this.status.player = this.status.player == 0 ? 1 : 0;
-
-            if (this.status.preloaded[this.status.player]) {
-                theOtherPlayer.play();
-                this.status.preloaded[this.status.player] = false;
-            }
-            else {
-                theOtherPlayer.src = `/stream${currentPlaylist[this.status.index]}`;
-                theOtherPlayer.load();
-                theOtherPlayer.play();
-            }
-
+            this.play(nextPlayerID, nextIndex);
         }
+    }
+
+    play(playerID, index) {
+        let currentPlaylist = this.playlist[this.status.playlist];
+
+        let player = this.player[playerID];
+        let theOtherplayerID = playerID == 0 ? 1 : 0;
+
+        // If preloaded, we don't have to load it twice :)
+        let isPreloaded = player.src == currentPlaylist[index];
+        if (isPreloaded) {
+            player.play();
+        }
+        else {
+            player.src = `/stream${currentPlaylist[index]}`;
+            player.load();
+            player.play();
+        }
+
+        // Update DOM
+        this.player.node.playIcon.src = `${ICON_PATH}pause.svg`;
+        let title = currentPlaylist[index].match(/([^/]+)$/)[0].replace('.mp3', '');
+        this.player.node.primaryTitle.innerHTML = title;
+
+        // Update status
+        this.status.player = playerID;
+        this.status.index = index;
+
+        // Preload the next song on demand.
+        if (this.option.preload) {
+            let queueIndex = index + 1;
+            if (currentPlaylist.length <= queueIndex) {
+                queueIndex -= currentPlaylist.length;
+            }
+            this.preload(theOtherplayerID, queueIndex);
+        }
+    }
+
+    preload(playerID, index) {
+        let currentPlaylist = this.playlist[this.status.playlist];
+        let player = this.player[playerID];
+        
+        if (index >= currentPlaylist.length) {
+            throw `index is bigger than playlist length.`;
+        }
+
+        player.src = `/stream${currentPlaylist[index]}`;
+        player.currentTime = 0;
+        player.load();
     }
 
     downloadMetadata(path) {

@@ -1,5 +1,5 @@
 :root {
-    --player-height: 32px;
+    --player-height: 72px;
 
     --shadow: rgba(0, 0, 0, .16);
 
@@ -15,5 +15,76 @@
 }
 
 body {
-    /* padding-bottom: var(--player-height); */
+    padding-bottom: var(--player-height);
+}
+
+.audio-player {
+    width: 100%;
+    height: 60%;
+
+    position: fixed;
+    bottom: 0;
+    left: 0;
+
+    pointer-events: none;
+}
+
+.audio-player .playlist {
+    width: 100%;
+    height: 100%;
+    max-height: 0;
+
+    position: absolute;
+    bottom: 0;
+    left: 0;
+
+    opacity: 0;
+
+    background-color: #F5F5F5;
+
+    pointer-events: all;
+    transition: max-height .2s ease,
+                opacity .2s ease;
+}
+
+.audio-player .player {
+    width: 100%;
+    height: var(--player-height);
+
+    position: absolute;
+    bottom: 0;
+    left: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background-color: #FFFFFF;
+    box-shadow: 0 -3px 6px var(--shadow);
+
+    pointer-events: all;
+}
+
+.audio-player .meta-data {
+    font-size: 12px;
+}
+
+.audio-player .action {
+    width: 144px;
+    height: 32px;
+    margin: 0 8px;
+
+    display: flex;
+
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.audio-player .action button {
+    margin: 0 8px;
+}
+
+.audio-player img {
+    width: 32px;
+    height: 32px;
 }

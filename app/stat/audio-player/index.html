@@ -1,4 +1,24 @@
-
 <link rel="stylesheet" href="/stat/audio-player/style.css">
+
+<aside id="audio-player" class="audio-player">
+    <div class="playlist"></div>
+    <div class="player">
+        <div class="meta-data">
+            <span id="audio-primary-title" class="primary-title"></span>
+            <span id="audio-secondary-title" class="secondary-title"></span>
+        </div>
+        <div class="action">
+            <button id="audio-prev" class="prev hitbox">
+                <img src="/stat/icon/skip-prev.svg">
+            </button>
+            <button id="audio-play" class="play hitbox">
+                <img id="audio-play-icon" src="/stat/icon/play.svg">
+            </button>
+            <button id="audio-next" class="next hitbox">
+                <img src="/stat/icon/skip-next.svg">
+            </button>
+        </div>
+    </div>
+</aside>
 
 <script defer src="/stat/audio-player/script.js"></script>
