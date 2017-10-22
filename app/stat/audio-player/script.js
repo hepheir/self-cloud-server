@@ -39,7 +39,7 @@ class AudioPlayer {
             autosave: true,
             shuffle: false,
             loop: true,
-            prevButtonToPlayAgain: 3
+            prevButtonToPlayAgain: 5
         };
 
         // Binding
@@ -127,6 +127,14 @@ class AudioPlayer {
         if (index === undefined) {
             index = this.status.index;
         }
+        else if (index >= this.playlist.list[this.status.playlist].length) {
+            if (this.option.loop) {
+                index = 0;
+            }
+            else {
+                throw 'end of the playlist!';
+            }
+        }
 
         let source = this.playlist.list[this.status.playlist][index];
         
@@ -207,18 +215,45 @@ class AudioPlayer {
 
 
     // Playlist Control
-    addToPlaylist(path, playlistID, index) {
+    addToPlaylist(path, playlistID, index, callback) {
+        if (path === undefined) {
+            throw 'Source path is required';
+        }
         // If `playlistID` and `index` is not defined, use values that is currently being played.
-        if (playlistID === undefined) {
+        if (playlistID === undefined && index === undefined && callback === undefined)
+        {
             playlistID = this.status.playlist;
-        }
-        else if (typeof playlistID === 'number' && index === undefined) {
-            index = playlistID;
-            playlistID = this.status.playlist;
-        }
-
-        if (index === undefined) {
             index = this.status.index;
+        }
+        else if (index === undefined && callback === undefined)
+        {
+            if (typeof playlistID === 'number') {
+                index = playlistID;
+                playlistID = this.status.playlist;
+            }
+            else if (typeof playlistID === 'function') {
+                callback = playlistID;
+                playlistID = this.status.playlist;
+                index = this.status.index;
+            }
+            else if (this.status.playlist == playlistID) {
+                index = this.status.index;
+            }
+            else {
+                throw 'index is required to add source to another playlist.';
+            }
+        }
+        else if (callback === undefined)
+        {
+            if (this.status.playlist == playlistID && typeof index === 'function') {
+                callback = index;
+                index = this.status.index;
+            }
+            else if (typeof playlistID === 'number' && typeof index === 'function') {
+                callback = index;
+                index = playlistID;
+                playlistID = this.status.playlist;
+            }
         }
 
 
@@ -227,10 +262,10 @@ class AudioPlayer {
 
         if (playlist === undefined) {
             playlist = new Array();
+        }
 
-            if (index !== 0 || index !== undefined) {
-                throw `Index out of range`;
-            }
+        if (index > playlist.length) {
+            throw `Index out of range`;
         }
 
         // Append new source to playlist.
@@ -251,7 +286,14 @@ class AudioPlayer {
         else if (this.option.preload) {
             this.createAudioBuffer(path, audioBuffer => {
                 this.playlist.list[playlistID][index].buffer = audioBuffer;
+                
+                if (callback !== undefined) {
+                    callback();
+                }
             });
+        }
+        else if (callback !== undefined) {
+            callback();
         }
 
         if (this.option.autosave) {
