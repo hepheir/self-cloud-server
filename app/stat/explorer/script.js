@@ -177,8 +177,8 @@ class Explorer {
         if (filedata.type == 'folder') {
             this.openDir(filedata.path);
         }
-        else if (filedata.type == 'audio' && typeof audio !== undefined) {
-            audio.queuePlaylist(audio.status.playlist, audio.status.index, filedata.path);
+        else if (filedata.type == 'audio' && audio !== undefined) {
+            audio.addToPlaylist(filedata.path);
         }
     }
 
