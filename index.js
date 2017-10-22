@@ -39,6 +39,7 @@ app.all('/', (req, res) => {
     res.send('<script>location.replace("./drive/");</script>');
 })
 
+// Render Pages
 let driveSection = /^\/drive\//;
 app.all(driveSection, (req, res) => {
     log.create(`<${req.ip}> Rendering UI for client.`);
@@ -62,107 +63,86 @@ app.all(driveSection, (req, res) => {
 })
 
 
+// Render JSON data of a directory.
 let driveJsonSection = /^\/json\//;
 app.all(driveJsonSection, (req, res) => {
     var path = getPath(req.path.replace(driveJsonSection, ''));
 
+    // Error handler
     if (!fs.existsSync(path)) {
-        console.log('not found!', path);
-        res.send(null);
+        res.json({error: 'not found!'});
         return;
+
     } else if (!fs.statSync(path).isDirectory()) {
-        console.log('not a directory!', path);
-        res.send(null);
+        res.json({error: 'not a directory!'});
         return;
     }
     
+
     timer.start('loading!');
 
-    let files = fs.readdirSync(path);
-    
-    files = files.map(f => {
-        let file = {
+    // Parse directory data into useful form.
+    let files = fs.readdirSync(path).map(f => {
+        let source = {
             name: f,
             type: fileType(path + f),
-            secured: false
+            secured: false // not yet.
         }
 
-        if (file.type == 'folder') {
-            file.name += '/';
+        if (source.type == 'folder') {
+            source.name += '/';
         }
 
-        return file;
-    })
+        return source;
+    });
 
-    // Temporal action to prevent mac OS hidden file from showing.
+    // Temporal action to prevent mac OS hidden files from appearing. + and unwanted files.
     files = files.filter(f => {
         return !f.name.includes('._') && !f.name.includes('CENSORED');
     })
     
-    res.send(files);
+
+    res.json(files);
     
+    // Time time time
     let speed = timer.end('finished loading');
     log.create(`<${req.ip}> accessed to [${path}], JSON rendering took ${speed} ms.`);
 })
 
 
-let audioMetadataSection = /^\/audio-meta\//;
-app.all(audioMetadataSection, (req, res) => {
-    var path = getPath(req.path.replace(audioMetadataSection, ''));
-
-    if (fileType(path) != 'audio') {
-        res.send(null);
-        return;
-
-    } else if (!fs.existsSync(path)) {
-        res.send(null);
-        return;
-    }
-    
-    timer.start('loading!');
-
-    let audio = {
-        title: 'title',
-        artist: 'artist',
-        duration: 120
-    }
-    
-    res.send(audio);
-    
-    let speed = timer.end('finished loading');
-    log.create(`<${req.ip}> requested audio metadata [${path}], JSON rendering took ${speed} ms.`);
-})
-
 let playlistSection = /^\/playlist\//;
 app.all(playlistSection, (req, res) => {
     let params = req.path.replace(playlistSection, '').split('/');
 
+    // 1. Get user data from path string. >> /playlist/:userID/:playlistID/
     let clientID = params[0],
         playlistID = params[1];
 
+    // 2. is save mode?
     if ('save' in req.query) {
         let playlist = new Array();
 
+        // 2-1. Each value has path string that is encoded by encodeURIcompoent().
         for (let key in req.query) {
             if (key == 'save') {
-                continue;
+                continue
             }
             playlist.push(decodeURIComponent(req.query[key]));
         }
 
+        // 2-2. Save the playlist using custom module.
         pl.setPlaylist(clientID, playlistID, playlist);
-        
+    
+    // 3. Record what's going on.
         log.create(`<${req.ip}> (${clientID}) saved playlist (${playlistID}).`);
-
-    }
-    else {
+    } else {
         log.create(`<${req.ip}> (${clientID}) downloaded playlist (${playlistID}).`);
     }
 
+    // 4. Get the playlist using custom module.
     let content = pl.getPlaylist(clientID, playlistID);
 
-    res.setHeader('Content-Type', 'application/json');
-    res.send(content);
+    res.json(content);
 })
 
 let streamSection = /^\/stream\//;
@@ -222,7 +202,7 @@ app.all(streamSection, (req, res) => {
 
 // Launch Server!
 
-app.listen(PORT, () => {
+app.listen(80, () => {
     log.create(`\nSet root directory [${ROOT_PATH}]\nSelf-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
 })
 

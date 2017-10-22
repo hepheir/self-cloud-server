@@ -204,10 +204,12 @@ class Explorer {
         .then(response => {
             if (Array.isArray(response)) {
                 return response;
-    
-            } else {
-                console.log('Access Denied or Not found.', path);
-                throw 'Error'
+            }
+            else if (response.error) {
+                throw response.error;
+            }
+            else {
+                throw 'Unexpected Error.';
             }
         })
     }
