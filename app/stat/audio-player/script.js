@@ -80,8 +80,14 @@ class AudioPlayer {
                 }
             }, this))
             .then(() => {
-                if (this.option.autoplay)
-                    this.play(0);
+                if (this.option.autoplay) {
+                    let queue = localStorage.getItem('lastPlayed');
+                    if (queue == undefined) {
+                        queue = 0;
+                    }
+                    this.play(queue);
+
+                }
             })
             
         
@@ -181,6 +187,8 @@ class AudioPlayer {
 
         this.status.startedAt = this.player.context.currentTime - start;
         this.status.time = 0;
+
+        localStorage.setItem('lastPlayed', index);
 
         // Update UI
         this.player.node.playIcon.src = ICON_PATH + 'pause.svg';
@@ -286,7 +294,7 @@ class AudioPlayer {
         else if (this.option.preload) {
             this.createAudioBuffer(path, audioBuffer => {
                 this.playlist.list[playlistID][index].buffer = audioBuffer;
-                
+
                 if (callback !== undefined) {
                     callback();
                 }
