@@ -20,7 +20,7 @@
 	<span id="header__title" class="title"></span>
 	
 	<button id="header__secondary-button" class="secondary-button hitbox">
-		<img class="icon" src="/stat/icon/user-profile.svg" width="24" height="24">
+		<img class="icon" src="/stat/icon/playlist-audio.svg" width="24" height="24">
 	</button>
 </header>
 
@@ -89,4 +89,28 @@ var timer = {
 	}
 }
 
+// lab
+
+header.secondaryButton.node.addEventListener('click', evt => {
+	if (audio !== undefined) {
+		let msg = '현재 재생목록:\n\n', i = 0;
+
+		audio.playlist.list[audio.status.playlist].forEach(item => {
+			let filename = item.path.match(/[^/]+$/)[0].replace('.mp3', '');
+
+			if (i == audio.status.index) {
+				msg += `${i} >> [${filename}]\n\n`;
+			} else {
+				msg += `${i} [${filename}]\n\n`;
+			}
+			i++;
+		});
+
+		msg += '\n현재 재생중인 곡을 재생목록에서 삭제합니까?'
+
+		if (confirm(msg)) {
+			audio.removeFromPlaylist();
+		}
+	}
+})
 </script>
