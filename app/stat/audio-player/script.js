@@ -132,6 +132,11 @@ class AudioPlayer {
         
         // Download buffer if there's no cached one.
         if (source.buffer === undefined) {
+
+            // Loading UI
+            this.player.node.playIcon.src = ICON_PATH + 'play.svg';
+            this.player.node.primaryTitle.innerHTML = '로딩중...';
+
             source.buffer = this.createAudioBuffer(source.path, audioBuffer => {
                 this.playlist.list[this.status.playlist][index].buffer = audioBuffer;
 
