@@ -113,4 +113,10 @@ header.secondaryButton.node.addEventListener('click', evt => {
 		}
 	}
 })
+
+document.addEventListener('keypress', evt => {
+	if (evt.keyCode == 32 && audio !== undefined) {
+		audio.onPlayButtonClick();
+	}
+})
 </script>
