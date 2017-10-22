@@ -113,6 +113,10 @@ class AudioPlayer {
 
     // Player Control
     play(index, start) {
+        if (this.playlist.list[this.status.playlist].length == 0 || this.playlist.list[this.status.playlist] == undefined) {
+            throw 'Empty playlist!';
+        }
+
         // Already being played? abort that!
         if (this.status.bufferSource !== undefined) {
             this.status.bufferSource.removeEventListener('ended', this.onEnded);
@@ -173,6 +177,10 @@ class AudioPlayer {
     }
 
     pause() {
+        if (this.playlist.list[this.status.playlist].length == 0 || this.playlist.list[this.status.playlist] == undefined) {
+            throw 'Empty playlist!';
+        }
+
         // Already paused?
         if (this.status.time) {
             return;
