@@ -177,6 +177,15 @@ app.all(streamSection, (req, res) => {
 
     log.create(`<${req.ip}> downloaded [${path}]`);
 
+    let filetype = fileType(path),
+        extension = path.match(/[^.]+$/)[0];
+
+    if (extension == 'mp3') {
+        extension = 'mpeg';
+    }
+
+    let contentType = `${filetype}/${extension}`;
+
     // Level ACCESS
     const stat = fs.statSync(path);
     const fileSize = stat.size;
@@ -194,14 +203,14 @@ app.all(streamSection, (req, res) => {
             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
             'Accept-Ranges': 'bytes',
             'Content-Length': chunksize,
-            'Content-Type': 'video/mp4',
+            'Content-Type': contentType,
         }
         res.writeHead(206, head);
         file.pipe(res);
     } else {
         const head = {
             'Content-Length': fileSize,
-            'Content-Type': 'video/mp4',
+            'Content-Type': contentType,
         }
         res.writeHead(200, head)
         fs.createReadStream(path).pipe(res)
