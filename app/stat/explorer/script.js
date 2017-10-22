@@ -310,12 +310,16 @@ class Explorer {
     
         // 4. Finish up opening a path.
         .then(() => {
+            // 4-1. Update path status.
             window.history.pushState('', '', `/drive${this.status.loadingPath}`);
-    
             this.status.currentPath = this.status.loadingPath;
-    
+
+            // 4-2. Scroll to Top.
+            document.querySelector('.body-layout').scrollTop = 0;
+            
+
             let isRoot = this.status.currentPath == '/';
-            // 4-1. Disable Arrow-back button on header, if currentPath is the root dir.
+            // 4-3-1. if on Root dir.
             if (isRoot) {
                 document.body.setAttribute('root', 'true');
                 header.primaryButton.icon.src = `${ICON_PATH}home.svg`
@@ -324,7 +328,9 @@ class Explorer {
                 let event = 'click';
                 header.primaryButton.node.removeEventListener(event, header.primaryButton.currentEl[event]);
     
-            } else {
+            }
+            // 4-3-2. if not on Root dir.
+            else {
                 document.body.setAttribute('root', 'false');
                 header.primaryButton.icon.src = `${ICON_PATH}arrow-back.svg`
                 header.title.node.innerHTML = this.status.currentPath.match(/[^/]+\/$/)[0].replace('/', '');
