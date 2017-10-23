@@ -40,7 +40,6 @@ class AudioPlayer {
         // Binding
             this.initialize = this.initialize.bind(this);
             this.createCache = this.createCache.bind(this);
-            this.readID3Tags = this.readID3Tags.bind(this);
             this.optIndex = this.optIndex.bind(this);
 
             this.play = this.play.bind(this);
@@ -102,7 +101,7 @@ class AudioPlayer {
         })
         .then(arrayBuffer => {
             this.cache[path] = new Object();
-            
+
             return arrayBuffer;
         })
         // Cache tags.
@@ -168,16 +167,6 @@ class AudioPlayer {
                 }
             }, err => console.log(err))
         })
-    }
-
-    readID3Tags(arrayBuffer, callback) {
-        if (callback === undefined) {
-            throw 'have nothing to do with.';
-        }
-        
-        
-
-        callback(tags);
     }
 
     optIndex(index) {
