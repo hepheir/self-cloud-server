@@ -25,7 +25,7 @@ class AudioPlayer {
             next: document.getElementById('audio-next')
         };
 
-        this.audioBuffer = new Object();
+        this.cache = new Object();
 
         this.playlist = { default: new Array() };
         this.option = {
@@ -39,7 +39,8 @@ class AudioPlayer {
 
         // Binding
             this.initialize = this.initialize.bind(this);
-            this.createAudioBuffer = this.createAudioBuffer.bind(this);
+            this.createCache = this.createCache.bind(this);
+            this.readID3Tags = this.readID3Tags.bind(this);
             this.optIndex = this.optIndex.bind(this);
 
             this.play = this.play.bind(this);
@@ -79,12 +80,12 @@ class AudioPlayer {
         this.node.next.addEventListener('click', this.onNextButtonClick);
     }
 
-    createAudioBuffer(path, callback) {
+    createCache(path, callback) {
         if (path == undefined) {
             throw `path is required`;
         }
 
-        if (this.audioBuffer[path] !== undefined) {
+        if (this.cache[path] !== undefined) {
             console.log('Audio Buffer already exists.');
             return;
         }
@@ -100,8 +101,65 @@ class AudioPlayer {
             }
         })
         .then(arrayBuffer => {
+            this.cache[path] = new Object();
+            
+            return arrayBuffer;
+        })
+        // Cache tags.
+        .then(arrayBuffer => {
+            // Thanks alot jDataView! - hepheir.
+            function getString(length, byteOffset, encoding) {
+                encoding = encoding === undefined ? 'utf-8' : encoding;
+
+                let bytes = new Uint8Array(arrayBuffer, byteOffset, length);
+
+                return new TextDecoder(encoding).decode(bytes);
+            }
+
+            var dv = new DataView(arrayBuffer);
+            
+            let tagString = getString(128, dv.byteLength - 128, 'ISO-8859-1');
+            
+            let tags = new Object();
+            // "TAG" starts at byte -128 from EOF.
+            // See http://en.wikipedia.org/wiki/ID3
+            if (tagString.startsWith('TAG')) {
+                let tagLength = {
+                    tag: 3,
+                    title: 30,
+                    artist: 30,
+                    album: 30,
+                    year: 4
+                }
+                
+                let offset = 0;
+                for (let key in tagLength) {
+                    tags[key] = '';
+                    
+                    let i;
+                    for (i = offset; i < tagLength[key]; i++) {
+                        tags[key] += tagString[i];
+                    }
+
+                    tags[key] = tags[key] == '' ? key[0].toUpperCase() + key.slice(1) : tags[key];
+
+                    console.log(i, tagString.length);
+                    offset += tagLength[key];
+                }
+                console.log(tagString.toString('utf-8'), tags);
+
+            } else {
+                console.log('no ID3v1 data found.');
+                tags = undefined;
+            }
+            this.cache[path].tags = tags;
+
+            return arrayBuffer;
+        })
+        // Cache Audio Buffer
+        .then(arrayBuffer => {
             this.player.decodeAudioData(arrayBuffer, audioBuffer => {
-                this.audioBuffer[path] = audioBuffer;
+                this.cache[path].audioBuffer = audioBuffer;
 
                 console.log('Successfully created Audio Buffer: ', audioBuffer);
 
@@ -110,6 +168,16 @@ class AudioPlayer {
                 }
             }, err => console.log(err))
         })
+    }
+
+    readID3Tags(arrayBuffer, callback) {
+        if (callback === undefined) {
+            throw 'have nothing to do with.';
+        }
+        
+        
+
+        callback(tags);
     }
 
     optIndex(index) {
@@ -161,12 +229,12 @@ class AudioPlayer {
         let path = playlist[index];
         
         // Download buffer if there's no cached one.
-        if (this.audioBuffer[path] === undefined) {
+        if (this.cache[path] === undefined) {
             // Loading UI
             this.node.playIcon.src = ICON_PATH + 'play.svg';
             this.node.primaryTitle.innerHTML = '로딩중...';
 
-            this.createAudioBuffer(path, () => {
+            this.createCache(path, () => {
                 this.play(index);
             });
             return;
@@ -187,7 +255,7 @@ class AudioPlayer {
         // Create a one-time buffer source.
         let bufferSource = this.player.createBufferSource();
 
-        bufferSource.buffer = this.audioBuffer[path];
+        bufferSource.buffer = this.cache[path].audioBuffer;
 
         bufferSource.addEventListener('ended', this.onEnded);
 
@@ -207,10 +275,10 @@ class AudioPlayer {
         // Update UI
         this.node.playIcon.src = ICON_PATH + 'pause.svg';
 
-        this.node.primaryTitle.innerHTML = path.match(/[^/]+$/)[0].replace('.mp3', '');
-        this.node.secondaryTitle.innerHTML = 'Artist';
+        this.node.primaryTitle.innerHTML = this.cache[path].tags.title;
+        this.node.secondaryTitle.innerHTML = this.cache[path].tags.artist;
 
-        console.log(`playing ${index}th song.`)
+        console.log(`playing ${index}th song from ${start}.`)
     }
 
     pause() {
@@ -256,7 +324,7 @@ class AudioPlayer {
         // Save playlist if user want.
         if (this.option.autosave) this.uploadPlaylist(playlistID);
         
-        if (this.option.preload) this.createAudioBuffer(path, () => { if (callback !== undefined) callback() });
+        if (this.option.preload) this.createCache(path, () => { if (callback !== undefined) callback() });
         else if (callback !== undefined) callback();
         
         console.log('queued to playlist!');
