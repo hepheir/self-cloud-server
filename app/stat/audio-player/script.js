@@ -340,6 +340,11 @@ class AudioPlayer {
         }
         playlist[index] = path;
 
+        // Current playing song will be shifted +1.
+        if (index <= this.status.index) {
+            this.status.index++;
+        }
+
         this.playlist[playlistID] = playlist;
         
         // Save playlist if user want.
