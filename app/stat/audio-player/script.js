@@ -68,6 +68,7 @@ class AudioPlayer {
                     if (queue == undefined) {
                         queue = 0;
                     }
+                    this.status.index = queue;
                     this.play(queue);
 
                 }
@@ -102,6 +103,8 @@ class AudioPlayer {
         .then(arrayBuffer => {
             this.cache[path] = new Object();
 
+            this.cache[path].isloading = true;
+
             return arrayBuffer;
         })
         // Cache tags.
@@ -118,6 +121,13 @@ class AudioPlayer {
             var dv = new DataView(arrayBuffer);
             
             let tagString = getString(128, dv.byteLength - 128, 'ISO-8859-1');
+
+            let encoding = 'ISO-8859-1';
+
+            if (tagString.match(/[^a-zA-Z0-9]+/) !== null) {
+                encoding = 'EUC-KR';
+                tagString = getString(128, dv.byteLength - 128, encoding);
+            }
             
             let tags = new Object();
             // "TAG" starts at byte -128 from EOF.
@@ -133,23 +143,22 @@ class AudioPlayer {
                 
                 let offset = 0;
                 for (let key in tagLength) {
-                    tags[key] = '';
-                    
-                    let i;
-                    for (i = offset; i < tagLength[key]; i++) {
-                        tags[key] += tagString[i];
-                    }
+                    tags[key] = getString(tagLength[key], dv.byteLength - 128 + offset, encoding).toString('utf-8');
+
+                    offset += tagLength[key];
 
                     tags[key] = tags[key] == '' ? key[0].toUpperCase() + key.slice(1) : tags[key];
 
-                    console.log(i, tagString.length);
-                    offset += tagLength[key];
+                    console.log(tags[key]);
                 }
                 console.log(tagString.toString('utf-8'), tags);
 
             } else {
                 console.log('no ID3v1 data found.');
-                tags = undefined;
+                tags = {
+                    title : path.match(/[^/]+$/)[0].replace('.mp3', ''),
+                    artist: 'Artist'
+                };
             }
             this.cache[path].tags = tags;
 
@@ -166,6 +175,9 @@ class AudioPlayer {
                     callback()
                 }
             }, err => console.log(err))
+        })
+        .then(() => {
+            this.cache[path].isloading = false;
         })
     }
 
@@ -217,15 +229,35 @@ class AudioPlayer {
 
         let path = playlist[index];
         
+
+        console.log(`choosen: ${index}, playing: ${this.status.index}`);
         // Download buffer if there's no cached one.
         if (this.cache[path] === undefined) {
-            // Loading UI
+            // Update Loading UI & Status
             this.node.playIcon.src = ICON_PATH + 'play.svg';
             this.node.primaryTitle.innerHTML = '로딩중...';
+            this.node.secondaryTitle.innerHTML = '기다려 주십쇼';
+            this.status.index = index;
+            this.status.startedAt = this.player.currentTime;
+            this.status.time = 0;
 
             this.createCache(path, () => {
-                this.play(index);
+                // If user changed mind to play other songs, don't play recently cached one.
+                if (this.status.index == index) {
+                    this.play(index);
+                }
             });
+            return;
+        }
+        else if (this.cache[path].isloading || this.cache[path].audioBuffer === undefined) {
+            // Update Loading UI & Status
+            this.node.playIcon.src = ICON_PATH + 'play.svg';
+            this.node.primaryTitle.innerHTML = '로딩중...';
+            this.node.secondaryTitle.innerHTML = '기다려 주십쇼';
+            this.status.index = index;
+            this.status.startedAt = this.player.currentTime;
+            this.status.time = 0;
+
             return;
         }
 
