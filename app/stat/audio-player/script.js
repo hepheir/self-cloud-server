@@ -11,28 +11,23 @@ class AudioPlayer {
 
             startedAt: 0,
         };
-        this.player = {
-            node: {
-                primaryTitle: document.getElementById('audio-primary-title'),
-                secondaryTitle: document.getElementById('audio-secondary-title'),
+        this.player = new AudioContext();
 
-                prev: document.getElementById('audio-prev'),
+        this.node = {
+            primaryTitle: document.getElementById('audio-primary-title'),
+            secondaryTitle: document.getElementById('audio-secondary-title'),
 
-                play: document.getElementById('audio-play'),
-                playIcon: document.getElementById('audio-play-icon'),
+            prev: document.getElementById('audio-prev'),
 
-                next: document.getElementById('audio-next')
-            },
+            play: document.getElementById('audio-play'),
+            playIcon: document.getElementById('audio-play-icon'),
 
-            context : new AudioContext()
+            next: document.getElementById('audio-next')
         };
-        this.playlist = {
-            node: undefined,
 
-            list: {
-                default: new Array()
-            }
-        };
+        this.audioBuffer = new Object();
+
+        this.playlist = { default: new Array() };
         this.option = {
             preload: false,
             autoplay: true,
@@ -45,6 +40,7 @@ class AudioPlayer {
         // Binding
             this.initialize = this.initialize.bind(this);
             this.createAudioBuffer = this.createAudioBuffer.bind(this);
+            this.optIndex = this.optIndex.bind(this);
 
             this.play = this.play.bind(this);
             this.pause = this.pause.bind(this);
@@ -63,22 +59,9 @@ class AudioPlayer {
 
     initialize() {
         this.downloadPlaylist('default')
-            .then(playlist => playlist.forEach(path => {
-                if (this.option.preload) {
-                    this.createAudioBuffer(path, audioBuffer => {
-                        this.playlist.list['default'].push({
-                            path: path,
-                            buffer: audioBuffer
-                        });
-                    });
-                }
-                else {
-                    this.playlist.list['default'].push({
-                        path: path,
-                        buffer: undefined
-                    });
-                }
-            }, this))
+            .then(playlist => {
+                this.playlist['default'] = playlist;
+            })
             .then(() => {
                 if (this.option.autoplay) {
                     let queue = localStorage.getItem('lastPlayed');
@@ -91,12 +74,21 @@ class AudioPlayer {
             })
             
         
-        this.player.node.prev.addEventListener('click', this.onPrevButtonClick);
-        this.player.node.play.addEventListener('click', this.onPlayButtonClick);
-        this.player.node.next.addEventListener('click', this.onNextButtonClick);
+        this.node.prev.addEventListener('click', this.onPrevButtonClick);
+        this.node.play.addEventListener('click', this.onPlayButtonClick);
+        this.node.next.addEventListener('click', this.onNextButtonClick);
     }
 
     createAudioBuffer(path, callback) {
+        if (path == undefined) {
+            throw `path is required`;
+        }
+
+        if (this.audioBuffer[path] !== undefined) {
+            console.log('Audio Buffer already exists.');
+            return;
+        }
+
         let url = '/stream' + path;
         new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
@@ -108,20 +100,53 @@ class AudioPlayer {
             }
         })
         .then(arrayBuffer => {
-            this.player.context.decodeAudioData(arrayBuffer, decoded => {
-                console.log('Successfully created Audio Buffer: ', decoded);
+            this.player.decodeAudioData(arrayBuffer, audioBuffer => {
+                this.audioBuffer[path] = audioBuffer;
 
-                callback(decoded);
+                console.log('Successfully created Audio Buffer: ', audioBuffer);
+
+                if (callback !== undefined) {
+                    callback()
+                }
             }, err => console.log(err))
         })
     }
 
+    optIndex(index) {
+        if (index === undefined) {
+            return this.status.index;
+        } else {
+            index = parseInt(index);
+        }
+
+        let playlist = this.playlist[this.status.playlist];
+
+        if (index >= playlist.length) {
+            if (this.option.loop) {
+                return 0;
+            } else {
+                throw 'end of the playlist!';
+            }
+        }
+        else if (index < 0) {
+            if (this.option.loop) {
+                return playlist.length - 1;
+            } else {
+                throw 'end of the playlist!';
+            }
+        }
+
+        return index;
+    }
+
 
     // Player Control
-    play(index, start) {
-        if (this.playlist.list[this.status.playlist].length == 0 || this.playlist.list[this.status.playlist] == undefined) {
-            throw 'Empty playlist!';
-        }
+    play(index) {
+        let playlist = this.playlist[this.status.playlist];
+        if (playlist.length == 0 || playlist == undefined) {
+            this.node.primaryTitle.innerHTML = '빈 재생목록';
+            throw 'Empty playlist!'
+        };
 
         // Already being played? abort that!
         if (this.status.bufferSource !== undefined) {
@@ -130,36 +155,25 @@ class AudioPlayer {
         }
 
         // If index is not defined, play what we were playing before.
-        if (index === undefined) {
-            index = this.status.index;
-        }
-        else if (index >= this.playlist.list[this.status.playlist].length) {
-            if (this.option.loop) {
-                index = 0;
-            }
-            else {
-                throw 'end of the playlist!';
-            }
-        }
+        index = this.optIndex(index);
 
-        let source = this.playlist.list[this.status.playlist][index];
+
+        let path = playlist[index];
         
         // Download buffer if there's no cached one.
-        if (source.buffer === undefined) {
-
+        if (this.audioBuffer[path] === undefined) {
             // Loading UI
-            this.player.node.playIcon.src = ICON_PATH + 'play.svg';
-            this.player.node.primaryTitle.innerHTML = '로딩중...';
+            this.node.playIcon.src = ICON_PATH + 'play.svg';
+            this.node.primaryTitle.innerHTML = '로딩중...';
 
-            source.buffer = this.createAudioBuffer(source.path, audioBuffer => {
-                this.playlist.list[this.status.playlist][index].buffer = audioBuffer;
-
+            this.createAudioBuffer(path, () => {
                 this.play(index);
             });
             return;
         }
 
         
+        let start;
         // If the player has been paused, start playing at the point where it was paused. 
         if (this.status.time) {
             start = this.status.time;
@@ -171,13 +185,13 @@ class AudioPlayer {
         }
 
         // Create a one-time buffer source.
-        let bufferSource = this.player.context.createBufferSource();
+        let bufferSource = this.player.createBufferSource();
 
-        bufferSource.buffer = source.buffer;
+        bufferSource.buffer = this.audioBuffer[path];
 
         bufferSource.addEventListener('ended', this.onEnded);
 
-        bufferSource.connect(this.player.context.destination);
+        bufferSource.connect(this.player.destination);
         bufferSource.start(0, start);
 
 
@@ -185,23 +199,21 @@ class AudioPlayer {
         this.status.index = index;
         this.status.bufferSource = bufferSource;
 
-        this.status.startedAt = this.player.context.currentTime - start;
+        this.status.startedAt = this.player.currentTime - start;
         this.status.time = 0;
 
         localStorage.setItem('lastPlayed', index);
 
         // Update UI
-        this.player.node.playIcon.src = ICON_PATH + 'pause.svg';
-        this.player.node.primaryTitle.innerHTML = source.path.match(/[^/]+$/)[0].replace('.mp3', '');
+        this.node.playIcon.src = ICON_PATH + 'pause.svg';
+        
+        this.node.primaryTitle.innerHTML = path.match(/[^/]+$/)[0].replace('.mp3', '');
+        this.node.secondaryTitle.innerHTML = 'Artist';
 
         console.log(`playing ${index}th song.`)
     }
 
     pause() {
-        if (this.playlist.list[this.status.playlist].length == 0 || this.playlist.list[this.status.playlist] == undefined) {
-            throw 'Empty playlist!';
-        }
-
         // Already paused?
         if (this.status.time) {
             return;
@@ -211,9 +223,9 @@ class AudioPlayer {
         this.status.bufferSource.stop();
         this.status.bufferSource = undefined;
 
-        this.status.time = this.player.context.currentTime - this.status.startedAt;
+        this.status.time = this.player.currentTime - this.status.startedAt;
         
-        this.player.node.playIcon.src = ICON_PATH + 'play.svg';
+        this.node.playIcon.src = ICON_PATH + 'play.svg';
     }
 
     seekTo(time) {
@@ -224,89 +236,28 @@ class AudioPlayer {
 
     // Playlist Control
     addToPlaylist(path, playlistID, index, callback) {
-        if (path === undefined) {
-            throw 'Source path is required';
-        }
-        // If `playlistID` and `index` is not defined, use values that is currently being played.
-        if (playlistID === undefined && index === undefined && callback === undefined)
-        {
-            playlistID = this.status.playlist;
-            index = this.status.index;
-        }
-        else if (index === undefined && callback === undefined)
-        {
-            if (typeof playlistID === 'number') {
-                index = playlistID;
-                playlistID = this.status.playlist;
-            }
-            else if (typeof playlistID === 'function') {
-                callback = playlistID;
-                playlistID = this.status.playlist;
-                index = this.status.index;
-            }
-            else if (this.status.playlist == playlistID) {
-                index = this.status.index;
-            }
-            else {
-                throw 'index is required to add source to another playlist.';
-            }
-        }
-        else if (callback === undefined)
-        {
-            if (this.status.playlist == playlistID && typeof index === 'function') {
-                callback = index;
-                index = this.status.index;
-            }
-            else if (typeof playlistID === 'number' && typeof index === 'function') {
-                callback = index;
-                index = playlistID;
-                playlistID = this.status.playlist;
-            }
-        }
-
-
         // If playlist with given id does not exists, create an empty one.
-        let playlist = this.playlist.list[playlistID];
+        let playlist = this.playlist[playlistID];
 
         if (playlist === undefined) {
             playlist = new Array();
         }
 
-        if (index > playlist.length) {
-            throw `Index out of range`;
-        }
+        index = this.optIndex(index);
 
         // Append new source to playlist.
         for (let i = playlist.length; i > index; i--) {
             playlist[i] = playlist[i - 1];
         }
-        playlist[index] = {
-            path: path,
-            buffer: undefined
-        }
+        playlist[index] = path;
 
-        this.playlist.list[playlistID] = playlist;
+        this.playlist[playlistID] = playlist;
         
-        // Play right now, if user wants to.
-        if (playlistID === this.status.playlist && index === this.status.index) {
-            this.play();
-        }
-        else if (this.option.preload) {
-            this.createAudioBuffer(path, audioBuffer => {
-                this.playlist.list[playlistID][index].buffer = audioBuffer;
-
-                if (callback !== undefined) {
-                    callback();
-                }
-            });
-        }
-        else if (callback !== undefined) {
-            callback();
-        }
-
-        if (this.option.autosave) {
-            this.uploadPlaylist(playlistID);
-        }
+        // Save playlist if user want.
+        if (this.option.autosave) this.uploadPlaylist(playlistID);
+        
+        if (this.option.preload) this.createAudioBuffer(path, () => { if (callback !== undefined) callback() });
+        else if (callback !== undefined) callback();
         
         console.log('queued to playlist!');
     }
@@ -330,18 +281,19 @@ class AudioPlayer {
             this.pause();
             this.status.time = 0.01;
             
-            this.player.node.primaryTitle.innerHTML = '';
-            this.player.node.secondaryTitle.innerHTML = '';
+            // Update UI
+            this.node.primaryTitle.innerHTML = '재생중인 곡 없음';
+            this.node.secondaryTitle.innerHTML = '노래를 선택해 주세요';
         }
 
-        let playlist = this.playlist.list[playlistID];
+        let playlist = this.playlist[playlistID];
 
         for (let i = index; i < playlist.length; i++) {
             playlist[i] = playlist[i + 1];
         }
         playlist.pop();
 
-        this.playlist.list[playlistID] = playlist;
+        this.playlist[playlistID] = playlist;
         
 
         if (this.option.autosave) {
@@ -358,7 +310,12 @@ class AudioPlayer {
         else {
             clientID = 'guest';
         }
-        // 2. Request playlist data from server.
+
+        // 2. URI encode.
+        clientID = encodeURIComponent(clientID);
+        playlistID = encodeURIComponent(playlistID);
+
+        // 3. Request playlist data from server.
         let xhr = new XMLHttpRequest();
         return new Promise((resolve, reject) => {
             xhr.onreadystatechange = () => {
@@ -370,7 +327,7 @@ class AudioPlayer {
             xhr.responseType = 'json';
             xhr.send();
         })
-        // 3. Sync local playlist with received playlist.
+        // 4. Sync local playlist with received playlist.
         .then(res => {
             if (res === null) {
                 res = new Array();
@@ -400,16 +357,20 @@ class AudioPlayer {
         }
         
         // 2. Prepare for AJAX request.
-        let playlist = this.playlist.list[playlistID];
+        let playlist = this.playlist[playlistID];
 
         let playlistURI;
         if (playlist) {
             let i = 0;
-            playlistURI = playlist.map(item => `id_${i++}=${encodeURIComponent(item.path)}`).join('&');
+            playlistURI = playlist.map(path => `id_${i++}=${encodeURIComponent(path)}`).join('&');
         }
         else {
             playlistURI = '';
         }
+
+        // 2-1. URI encode.
+        clientID = encodeURIComponent(clientID);
+        playlistID = encodeURIComponent(playlistID);
 
         // 3. Upload playlist data to server.
         let xhr = new XMLHttpRequest();
@@ -429,14 +390,14 @@ class AudioPlayer {
                 throw 'Server did not response. Idk whether uploading playlist was successful or not.';
             }
 
-            if (res.length != this.playlist.list[playlistID].length) {
-                console.log(res, this.playlist.list[playlistID]);
+            if (res.length != playlist.length) {
+                console.log(res, playlist);
                 throw `Sent playlist doesn't match with received playlist. (length is not equal)`;
             }
 
             for (let i = 0; i < res.length; i++) {
-                if (res[i] != this.playlist.list[playlistID][i].path) {
-                    console.log(res[i], this.playlist.list[playlistID][i]);
+                if (res[i] != playlist[i]) {
+                    console.log(res[i], playlist[i]);
                     throw `Sent playlist doesn't match with received playlist`;
                 }
             }
@@ -454,19 +415,14 @@ class AudioPlayer {
             return;
         }
 
-        let queue = this.status.index + 1;
-
-        let playlist = this.playlist.list[this.status.playlist];
-        if (playlist.length <= queue && this.option.loop) {
-            queue = 0;
-        }
+        let queue = this.optIndex(this.status.index + 1);
 
         this.play(queue);
     }
     
     onPrevButtonClick(evt) {
         // If played time is long enough, play the same song from its begging.
-        let playedTime = this.player.context.currentTime - this.status.startedAt;
+        let playedTime = this.player.currentTime - this.status.startedAt;
         if (playedTime > this.option.prevButtonToPlayAgain) {
             this.status.time = 0;
             this.play();
@@ -474,19 +430,7 @@ class AudioPlayer {
             return;
         }
 
-        let queue = this.status.index - 1,
-            playlist = this.playlist.list[this.status.playlist];
-
-        // When we reach the end,
-        if (queue < 0) {
-            if (this.option.loop) {
-                queue = playlist.length - 1;
-            }
-            else {
-                return;
-            }
-        }
-
+        let queue = this.optIndex(this.status.index - 1);
         this.play(queue);
     }
 
@@ -501,21 +445,45 @@ class AudioPlayer {
     }
     
     onNextButtonClick(evt) {
-        let queue = this.status.index + 1,
-            playlist = this.playlist.list[this.status.playlist];
-
-        // When we reach the end,
-        if (playlist.length <= queue) {
-            if (this.option.loop) {
-                queue = 0;
-            }
-            else {
-                return;
-            }
-        }
-
+        let queue = this.optIndex(this.status.index + 1);
         this.play(queue);
     }
 }
 
 var audio = new AudioPlayer();
+
+
+
+// lab
+
+audio.node.primaryTitle.addEventListener('click', a);
+audio.node.secondaryTitle.addEventListener('click', a);
+
+function a(evt) {
+	if (audio !== undefined) {
+		let msg = '현재 재생목록:\n\n', i = 0;
+
+		audio.playlist[audio.status.playlist].forEach(path => {
+			let filename = path.match(/[^/]+$/)[0].replace('.mp3', '');
+
+			if (i == audio.status.index) {
+				msg += `${i} >> [${filename}]\n\n`;
+			} else {
+				msg += `${i} [${filename}]\n\n`;
+			}
+			i++;
+		});
+
+		msg += '\n현재 재생중인 곡을 재생목록에서 삭제합니까?'
+
+		if (confirm(msg)) {
+			audio.removeFromPlaylist();
+		}
+	}
+}
+
+document.addEventListener('keypress', evt => {
+	if (evt.keyCode == 32) {
+		audio.onPlayButtonClick();
+	}
+})
