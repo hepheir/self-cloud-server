@@ -92,31 +92,23 @@ var timer = {
 // lab
 
 header.secondaryButton.node.addEventListener('click', evt => {
-	if (audio !== undefined) {
-		let msg = '현재 재생목록:\n\n', i = 0;
 
-		audio.playlist.list[audio.status.playlist].forEach(item => {
-			let filename = item.path.match(/[^/]+$/)[0].replace('.mp3', '');
-
-			if (i == audio.status.index) {
-				msg += `${i} >> [${filename}]\n\n`;
-			} else {
-				msg += `${i} [${filename}]\n\n`;
-			}
-			i++;
-		});
-
-		msg += '\n현재 재생중인 곡을 재생목록에서 삭제합니까?'
-
-		if (confirm(msg)) {
-			audio.removeFromPlaylist();
-		}
+	if (audio === undefined) {
+		throw 'audio player is not loaded';
 	}
-})
 
-document.addEventListener('keypress', evt => {
-	if (evt.keyCode == 32 && audio !== undefined) {
-		audio.onPlayButtonClick();
+	let playlistID = prompt('재생목록: ', audio.status.playlist);
+
+	if (playlistID == null) {
+		return;
 	}
+	audio.status.playlist = playlistID;
+
+	audio.downloadPlaylist(playlistID)
+	.then(playlist => {
+		audio.playlist[playlistID] = playlist;
+	})
+
+	console.log('new Playlist added', audio.status);
 })
 </script>
