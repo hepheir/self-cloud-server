@@ -66,7 +66,36 @@ body {
 }
 
 .audio-player .meta-data {
+    width: 100%;
+    height: 100%;
+    padding: 12px 16px;
+    overflow: hidden;
+    
+    display: block;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.audio-player .primary-title {
+    padding: 4px 0;
+
+    font-size: 14px;
+    color: rgba(0, 0, 0, .87);
+    
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.audio-player .secondary-title {
+    padding: 4px 0;
+
     font-size: 12px;
+    color: rgba(0, 0, 0, .56);
+    
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .audio-player .action {
