@@ -35,6 +35,7 @@ class Explorer {
         this.parseList = this.parseList.bind(this);
         this.appendNodes = this.appendNodes.bind(this);
         this.onTitleClick = this.onTitleClick.bind(this);
+        this.onSecondaryButtonClick = this.onSecondaryButtonClick.bind(this);
         this.readDir = this.readDir.bind(this);
         this.openDir = this.openDir.bind(this);
 
@@ -115,11 +116,11 @@ class Explorer {
             );
     
             // Add Event listner
-            let event = 'click',
-                callback = this.onTitleClick;
+            let t_event = 'click',
+                t_callback = this.onTitleClick;
     
-            filedata.title.node.addEventListener(event, callback);
-            filedata.title.currentEl[event] = callback;
+            filedata.title.node.addEventListener(t_event, t_callback);
+            filedata.title.currentEl[t_event] = t_callback;
     
     
         // Button Icons
@@ -146,6 +147,13 @@ class Explorer {
                 'button', {class: 'secondary-button hitbox'},
                 [filedata.secondaryButton.icon]
             );
+
+            // Add Event listner
+            let sb_event = 'click',
+                sb_callback = this.onSecondaryButtonClick;
+
+            filedata.secondaryButton.node.addEventListener(sb_event, sb_callback);
+            filedata.secondaryButton.currentEl[sb_event] = sb_callback;
     
         // li Element
     
@@ -181,6 +189,24 @@ class Explorer {
             audio.addToPlaylist(filedata.path, audio.status.playlist, audio.status.index + 1, () => {
                 audio.play(audio.status.index + 1);
             });
+        }
+    }
+
+    onSecondaryButtonClick(evt) {
+        let li = evt.currentTarget.parentNode;
+        
+        let filedata = {
+            type: li.getAttribute('type'),
+            path: li.getAttribute('path')
+        };
+
+        if (filedata.type == 'folder') {
+            alert(filedata.path);
+        }
+        else if (filedata.type == 'audio' && audio !== undefined) {
+            let index = prompt('Playlist add\n>>> enter index number: ');
+
+            audio.addToPlaylist(filedata.path, audio.status.playlist, index);
         }
     }
 
