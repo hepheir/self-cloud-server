@@ -206,7 +206,7 @@ class AudioPlayer {
 
         // Update UI
         this.node.playIcon.src = ICON_PATH + 'pause.svg';
-        
+
         this.node.primaryTitle.innerHTML = path.match(/[^/]+$/)[0].replace('.mp3', '');
         this.node.secondaryTitle.innerHTML = 'Artist';
 
@@ -461,7 +461,7 @@ audio.node.secondaryTitle.addEventListener('click', a);
 
 function a(evt) {
 	if (audio !== undefined) {
-		let msg = '현재 재생목록:\n\n', i = 0;
+		let msg = `현재 재생목록: ${audio.status.playlist}\n\n`, i = 0;
 
 		audio.playlist[audio.status.playlist].forEach(path => {
 			let filename = path.match(/[^/]+$/)[0].replace('.mp3', '');
