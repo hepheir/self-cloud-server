@@ -4,3 +4,10 @@ data/log.txt
 test.js
 
 *.bat
+chromeMessage.js
+data/Database-log.txt
+data/Database-playlist.json
+data/playlist.json
+data/playlist.json
+data/playlist.json
+settings.json
