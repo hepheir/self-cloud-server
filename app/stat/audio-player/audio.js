@@ -209,21 +209,24 @@ class AudioPlayer {
 
         playlistID = this._isDefined(playlistID, this.status.playlist);
 
-        index = this._isDefined(index, this.status.index);
-        index = this._optIndex(index);
-
-
         // If playlist with given id does not exists, create an empty one.
         let playlist = this.playlist[playlistID];
 
         if (playlist === undefined)
             playlist = new Array();
 
+        index = this._isDefined(index, this.status.index);
+
+        if (index < playlist.length)
+            index = this._optIndex(index);
+        else // append new source to the end of the playlist
+            index = playlist.length;
+
 
         // Append new source to playlist.
-        for (let i = playlist.length; i > index; i--) {
+        for (let i = playlist.length; i > index; i--)
             playlist[i] = playlist[i - 1];
-        }
+        
         playlist[index] = path;
 
         // Current playing song will be shifted +1.
