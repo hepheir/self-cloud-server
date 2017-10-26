@@ -81,17 +81,7 @@ class AudioPlayer {
         this.status.playlist = this._isDefined(localStorage.getItem('playlist'), 'default');
         this.status.index    = this._isDefined(localStorage.getItem('index'), 0);
 
-        this.downloadPlaylist(this.status.playlist)
-            .then(playlist => {
-                this.playlist[this.status.playlist] = playlist;
-            })
-            .then(() => {
-                console.log(`initialize with playlist: [${this.status.playlist}], index: ${this.status.index}`);
-
-                if (this.option.autoplay)
-                    this.play(this.status.index);
-            })
-            
+        this.changeCurrentPlaylist(this.status.playlist, this.status.index);
         
         this.node.prev.addEventListener('click', this.onPrevButtonClick);
         this.node.play.addEventListener('click', this.onPlayButtonClick);
@@ -297,19 +287,26 @@ class AudioPlayer {
         }
     }
 
-    changeCurrentPlaylist(playlistID) {
+    changeCurrentPlaylist(playlistID, index) {
         if (playlistID === undefined)
             throw 'Playlist id is required.';
 
+        index = this._isDefined(index, 0);
         
         this.downloadPlaylist(playlistID)
             .then(playlist => {
                 this.stop();
                 this.playlist[playlistID] = playlist;
-                
-                this.status.index = 0;
+
+                this.status.index = index;
                 this.status.playlist = playlistID;
-                this.play();
+
+                this.setTitle('재생중인 곡 없음', '노래를 선택해 주세요');
+
+                console.log(`Successfully loaded playlist: [${this.status.playlist}], index: ${this.status.index}`);
+
+                if (this.option.autoplay)
+                    this.play();
             })
     }
 
