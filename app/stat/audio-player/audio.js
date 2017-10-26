@@ -57,6 +57,7 @@ class AudioPlayer {
             // Playlist
             this.addToPlaylist = this.addToPlaylist.bind(this);
             this.removeFromPlaylist = this.removeFromPlaylist.bind(this);
+            this.changeCurrentPlaylist = this.changeCurrentPlaylist.bind(this);
 
             // Event Listeners
             this.onEnded = this.onEnded.bind(this);
@@ -101,7 +102,7 @@ class AudioPlayer {
         window.setInterval(this._timer, this.option.timerPeriod);
     }
 
-    
+
     // Player
 
     play(index) {
@@ -294,6 +295,22 @@ class AudioPlayer {
         if (this.option.autosave) {
             this.uploadPlaylist(playlistID);
         }
+    }
+
+    changeCurrentPlaylist(playlistID) {
+        if (playlistID === undefined)
+            throw 'Playlist id is required.';
+
+        
+        this.downloadPlaylist(playlistID)
+            .then(playlist => {
+                this.stop();
+                this.playlist[playlistID] = playlist;
+                
+                this.status.index = 0;
+                this.status.playlist = playlistID;
+                this.play();
+            })
     }
 
 

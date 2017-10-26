@@ -103,13 +103,7 @@ header.secondaryButton.node.addEventListener('click', evt => {
 		return;
 	}
 
-	audio.downloadPlaylist(playlistID)
-	.then(playlist => {
-		audio.stop();
-		audio.playlist[playlistID] = playlist;
-		audio.status.playlist = playlistID;
-		audio.play();
-	})
+	audio.changeCurrentPlaylist(playlistID);
 
 	console.log('new Playlist added', audio.status);
 })
