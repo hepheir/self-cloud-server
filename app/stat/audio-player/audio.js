@@ -617,9 +617,7 @@ class AudioPlayer {
             return;
         }
 
-        let queue = this.optIndex(this.status.index + 1);
-
-        this.play(queue);
+        this.play(this.status.index + 1);
     }
     
     onPrevButtonClick(evt) {
