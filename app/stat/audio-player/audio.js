@@ -29,7 +29,7 @@ class AudioPlayer {
             loop: true,
             shuffle: false,
             prevActive: 5,
-            timerPeriod: 10
+            timerPeriod: 100
         };
 
         this.node = {
@@ -89,7 +89,7 @@ class AudioPlayer {
 
 
         // Start Timer
-        window.setInterval(this._timer, this.option.timerPeriod);
+        window.setInterval(this._timer, this.timerPeriod);
     }
 
 
@@ -138,6 +138,7 @@ class AudioPlayer {
         
         bufferSource.connect(this.player.destination);
         bufferSource.start(0, this.status.currentTime);
+        bufferSource.startedAt = this.player.currentTime - this.status.currentTime;
 
         // Update Status
         this.status.bufferSource = bufferSource;
@@ -581,10 +582,10 @@ class AudioPlayer {
     }
 
     _timer() {
-        if (this.status.paused)
+        if (this.status.paused || this.status.bufferSource === undefined)
             return;
         
-        this.status.currentTime = Math.round(this.status.currentTime * 1000 / this.option.timerPeriod + 1) * this.option.timerPeriod / 1000;
+        this.status.currentTime = this.player.currentTime - this.status.bufferSource.startedAt;
         
 
         let playlist = this.playlist[this.status.playlist],

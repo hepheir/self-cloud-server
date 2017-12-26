@@ -202,10 +202,13 @@ app.all(streamSection, (req, res) => {
 
 // Launch Server!
 
-app.listen(80, () => {
+app.listen(PORT, () => {
     log.create(`\nSet root directory [${ROOT_PATH}]\nSelf-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
 })
 
+app.listen(80, () => {
+    log.create(`Listening to Secondary port [${HOSTNAME}:${80}]!`);
+})
 
 // ################################### //
 
