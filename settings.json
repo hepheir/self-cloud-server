@@ -6,7 +6,7 @@
     "path": {
         // Mac: "/Volumes/Hepheir/Database"
         // Win: "G:/Database"
-        "root": "/Volumes/USB-4GB/",
+        "root": "G:/Database/5) Games/3) Nintendo™/NDS/닌텐도/",
         "log" : "data/log.txt",
         "playlist" : "data/playlist.json"
     },
