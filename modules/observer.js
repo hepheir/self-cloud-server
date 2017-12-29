@@ -1,6 +1,6 @@
 'use strict';
 
-const SETTINGS_PATH = 'settings.json';
+const SETTINGS_PATH = 'data/settings.json';
 
 // ################################### //
 
