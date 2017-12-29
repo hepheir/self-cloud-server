@@ -1,6 +1,6 @@
 'use strict';
 
-var date = new Date();
+var date;
 
 const fs = require('fs');
 
@@ -18,6 +18,8 @@ function _log(LOG_PATH)
     // 2. Create a new log file.
     function _new()
     {
+        date = new Date();
+
         // YYYYMMDD
         let file = `${date.getFullYear()}${date.getMonth() + 1}${date.getDate()}`;
 
@@ -38,7 +40,10 @@ function _log(LOG_PATH)
     }
 
     // 3. Log a new message.
-    function _create(msg) {
+    function _create(msg)
+    {
+        date = new Date();
+
         // 3-1. One log file for each dates.
         let path = _new();
 
