@@ -6,17 +6,16 @@
 
 // Custom Modules
 
-const observer = require('./modules/observer.js');
+const manager = require('./modules/manager.js');
 
-const log   = observer.log
-    , pl    = observer.playlist
-    , timer = observer.timer;
+const log   = manager.log
+    , pl    = manager.playlist;
 
-const HOSTNAME  = observer.settings.server.hostname
-    , PORT      = observer.settings.server.port
-    , ROOT_PATH = observer.settings.path.root;
+const HOSTNAME  = manager.settings.server.hostname
+    , PORT      = manager.settings.server.port
+    , ROOT_PATH = manager.settings.path.root;
 
-const SUPPORTED_MEDIA_TYPES = observer.settings.supported_media_types;
+const SUPPORTED_MEDIA_TYPES = manager.settings.supported_media_types;
 
 // NPM Modules
 
@@ -27,6 +26,7 @@ const fs = require('fs')
 // Express.js setting
 
 const app = express();
+
 app.use(cookieParser());
 app.use(express.static('app'));
 
@@ -43,7 +43,7 @@ app.all('/', (req, res) => {
 let driveSection = /^\/drive\//;
 app.all(driveSection, (req, res) => {
     log.create(`<${req.ip}> Rendering UI for client.`);
-    
+
     var path = getPath(req.path.replace(driveSection, ''));
 
     let files = [
@@ -203,12 +203,13 @@ app.all(streamSection, (req, res) => {
 // Launch Server!
 
 app.listen(PORT, () => {
-    log.create(`\nSet root directory [${ROOT_PATH}]\nSelf-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
+    log.create(`Set root directory [${ROOT_PATH}]`);
+    log.create(`Self-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
 })
 
-app.listen(80, () => {
-    log.create(`Listening to Secondary port [${HOSTNAME}:${80}]!`);
-})
+// app.listen(80, () => {
+//     log.create(`Listening to Secondary port [${HOSTNAME}:${80}]!`);
+// })
 
 // ################################### //
 
