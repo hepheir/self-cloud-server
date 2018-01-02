@@ -5,6 +5,7 @@
 const fs = require('fs');
 
 const log = require('./dist/log.js')
+    , render = require('./dist/render.js')
     , playlist = require('./dist/playlist.js');
 
 
@@ -29,13 +30,18 @@ let settings_file;
 settings_file = fs.readFileSync(SETTINGS_PATH);
 settings_file = JSON_RemoveComments(settings_file);
 
-const settings = JSON.parse(settings_file);
+var _settings = JSON.parse(settings_file);
+
+
+// 3. Pre load <log.js> for convenience.
+
+var _log = log(_settings.path.log);
 
 
 
 // ######## ROOT PATH ######## //
 
-var ROOT_PATH = settings.path.root;
+var ROOT_PATH = _settings.path.root;
 
 // 1. Correct the path.
 if (ROOT_PATH === '')
@@ -43,7 +49,7 @@ if (ROOT_PATH === '')
     ROOT_PATH = './';
 }
 else {
-    // Making sure `settings.path.root` ends with '/'.
+    // Making sure `_settings.path.root` ends with '/'.
     ROOT_PATH += '/';
     ROOT_PATH = ROOT_PATH.replace('//', '/');
 }
@@ -52,19 +58,22 @@ else {
 // 2. Validate the path.
 if (!fs.existsSync(ROOT_PATH))
 {
-    console.log(`Invalid root directory: [${ROOT_PATH}]`);
-    throw 300;
+    _log.create(`Invalid root directory - Path: [${ROOT_PATH}]`);
+    _log.create(`CLOSING SERVER...`);
+
+    throw 404;
 }
+
+_log.create(`Set root directory - Path: [${ROOT_PATH}]`);
 
 
 // ######## MODULE OUTPUTS ######## //
 
-var _log = log(settings.path.log);
-
-module.exports.settings = settings;
+module.exports.settings = _settings;
 
 module.exports.log = _log;
-module.exports.playlist = playlist(settings.path.playlist, _log);
+module.exports.render = render(_settings, _log);
+module.exports.playlist = playlist(_settings, _log);
 
 
 
