@@ -21,7 +21,11 @@ function _log(LOG_PATH)
         date = new Date();
 
         // YYYYMMDD
-        let file = `${date.getFullYear()}${date.getMonth() + 1}${date.getDate()}`;
+        let YYYY = date.getFullYear().toString(),
+            MM = date.getMonth() < 9 ? `0${date.getMonth() + 1}` : (date.getMonth() + 1).toString(),
+            DD = date.getDate() < 10 ? `0${date.getDate()}` : date.getDate().toString();
+
+        let file = YYYY + MM + DD;
 
         let path = LOG_PATH + file;
 
