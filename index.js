@@ -9,13 +9,12 @@
 const manager = require('./modules/manager.js');
 
 const log   = manager.log
+    , render = manager.render
     , pl    = manager.playlist;
 
 const HOSTNAME  = manager.settings.server.hostname
     , PORT      = manager.settings.server.port
     , ROOT_PATH = manager.settings.path.root;
-
-const SUPPORTED_MEDIA_TYPES = manager.settings.supported_media_types;
 
 // NPM Modules
 
@@ -41,72 +40,30 @@ app.all('/', (req, res) => {
 
 // Render Pages
 let driveSection = /^\/drive\//;
-app.all(driveSection, (req, res) => {
-    log.create(`<${req.ip}> Rendering UI for client.`);
+app.all(driveSection, (req, res) =>
+{
+    const content = render.getPage('explorer');
 
-    var path = getPath(req.path.replace(driveSection, ''));
-
-    let files = [
-        fs.readFileSync('app/header.partial.html'),
-        fs.readFileSync(`app/stat/explorer/index.html`),
-        fs.readFileSync(`app/stat/audio-player/index.html`),
-        fs.readFileSync('app/footer.partial.html')
-    ]
-
-    Promise.all(files)
-        .then(files => files = files.map(f => f = f.toString('utf-8')))
-        .then(files => {
-            const content = files.join('');
-
-            res.send(content);
-        })
+    log.create(`HTML page has rendered.`);
+    res.send(content);
 })
 
 
 // Render JSON data of a directory.
 let driveJsonSection = /^\/json\//;
-app.all(driveJsonSection, (req, res) => {
-    var path = getPath(req.path.replace(driveJsonSection, ''));
+app.all(driveJsonSection, (req, res) => 
+{
+    var path = render.getPath(req, driveJsonSection);
 
-    // Error handler
-    if (!fs.existsSync(path)) {
-        res.json({error: 'not found!'});
-        return;
+    let file_JSON = render.getJSON(path);
 
-    } else if (!fs.statSync(path).isDirectory()) {
-        res.json({error: 'not a directory!'});
-        return;
+
+    if (typeof file_JSON === 'object') {
+        log.create(`Requested path JSON loaded - Path: [${path}]`);
     }
-    
 
-    timer.start('loading!');
 
-    // Parse directory data into useful form.
-    let files = fs.readdirSync(path).map(f => {
-        let source = {
-            name: f,
-            type: fileType(path + f),
-            secured: false // not yet.
-        }
-
-        if (source.type == 'folder') {
-            source.name += '/';
-        }
-
-        return source;
-    });
-
-    // Temporal action to prevent mac OS hidden files from appearing. + and unwanted files.
-    files = files.filter(f => {
-        return !f.name.includes('._') && !f.name.includes('CENSORED');
-    })
-    
-
-    res.json(files);
-    
-    // Time time time
-    let speed = timer.end('finished loading');
-    log.create(`<${req.ip}> accessed to [${path}], JSON rendering took ${speed} ms.`);
+    res.json(file_JSON);
 })
 
 
@@ -147,10 +104,10 @@ app.all(playlistSection, (req, res) => {
 
 let streamSection = /^\/stream\//;
 app.all(streamSection, (req, res) => {
-    var path = getPath(req.path.replace(streamSection, ''));
+    var path = render.getPath(req, streamSection);
 
     if (!fs.existsSync(path)) {
-        console.log('404: stream: ', path);
+        log.create(`404 - Requested file not found - Mode: {Stream}, Path: [${path}]`);
         res.send(null);
         return;
     }
@@ -202,48 +159,10 @@ app.all(streamSection, (req, res) => {
 
 // Launch Server!
 
-app.listen(PORT, () => {
-    log.create(`Set root directory [${ROOT_PATH}]`);
-    log.create(`Self-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
-})
+app.listen(PORT, () => log.create(`Self-cloud-server listening on [${HOSTNAME}:${PORT}]!`));
 
 // app.listen(80, () => {
 //     log.create(`Listening to Secondary port [${HOSTNAME}:${80}]!`);
 // })
 
 // ################################### //
-
-// Functions
-
-function getPath(path) {
-    path = ROOT_PATH + decodeURIComponent(path);
-    path = path.replace('//', '/');
-    return path;
-}
-
-
-
-/**
- * Return the type of a file.
- * @param {string} path 
- * @return {string}
- */
-function fileType(path) {
-    if (!fs.existsSync(path)) {
-        return null;
-    }
-
-    let stat = fs.statSync(path);
-    if (stat.isDirectory()) {
-        return 'folder';
-    }
-
-    let extension = path.match(/([^.]*)$/)[0];
-
-    for (let type in SUPPORTED_MEDIA_TYPES) {
-        if (SUPPORTED_MEDIA_TYPES[type].includes(extension)) {
-            return type;
-        }
-    }
-    return 'file';
-}
