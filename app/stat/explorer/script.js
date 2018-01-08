@@ -191,7 +191,7 @@ class Explorer {
             });
         }
         else if (confirm(`[${li.getAttribute('path')}] 다운 받으시겠습니까?`)) {
-            location.assign(`http://unit.bojeong.hs.kr/stream${li.getAttribute('path')}`);
+            location.assign(`/stream${li.getAttribute('path')}`);
         }
     }
 
