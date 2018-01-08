@@ -67,63 +67,26 @@ app.all(driveJsonSection, (req, res) =>
 })
 
 
-let playlistSection = /^\/playlist\//;
-app.all(playlistSection, (req, res) => {
-    let params = req.path.replace(playlistSection, '').split('/');
-
-    // 1. Get user data from path string. >> /playlist/:userID/:playlistID/
-    let clientID = params[0],
-        playlistID = params[1];
-
-    // 2. is save mode?
-    if ('save' in req.query) {
-        let playlist = new Array();
-
-        // 2-1. Each value has path string that is encoded by encodeURIcompoent().
-        for (let key in req.query) {
-            if (key == 'save') {
-                continue
-            }
-            playlist.push(decodeURIComponent(req.query[key]));
-        }
-
-        // 2-2. Save the playlist using custom module.
-        pl.setPlaylist(clientID, playlistID, playlist);
-    
-    // 3. Record what's going on.
-        log.create(`<${req.ip}> (${clientID}) saved playlist (${playlistID}).`);
-    } else {
-        log.create(`<${req.ip}> (${clientID}) downloaded playlist (${playlistID}).`);
-    }
-
-    // 4. Get the playlist using custom module.
-    let content = pl.getPlaylist(clientID, playlistID);
-
-    res.json(content);
-})
-
 let streamSection = /^\/stream\//;
 app.all(streamSection, (req, res) => {
     var path = render.getPath(req, streamSection);
 
     if (!fs.existsSync(path)) {
-        log.create(`404 - Requested file not found - Mode: {Stream}, Path: [${path}]`);
+        log.create(`Requested file not found - Mode: {Stream}, Path: [${path}]`);
         res.send(null);
         return;
     }
 
-    log.create(`<${req.ip}> downloaded [${path}]`);
+    let file_type = render.getFileType(path),
+        file_ext  = render.getFileExt(path);
 
-    let filetype = fileType(path),
-        extension = path.match(/[^.]+$/)[0];
+    if (file_ext == 'mp3')
+        file_ext = 'mpeg';
 
-    if (extension == 'mp3') {
-        extension = 'mpeg';
-    }
 
-    let contentType = `${filetype}/${extension}`;
+    let contentType = `${file_type}/${file_ext}`;
 
-    // Level ACCESS
+
     const stat = fs.statSync(path);
     const fileSize = stat.size;
     const range = req.headers.range;
@@ -152,6 +115,8 @@ app.all(streamSection, (req, res) => {
         res.writeHead(200, head)
         fs.createReadStream(path).pipe(res)
     }
+
+    log.create(`Requested file streamed - Mode: {Stream}, Path: [${path}]`);
 })
 
 
