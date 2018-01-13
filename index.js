@@ -55,15 +55,28 @@ app.all(driveJsonSection, (req, res) =>
 {
     var path = render.getPath(req, driveJsonSection);
 
-    let file_JSON = render.getJSON(path);
+    let files = render.readDir(path);
 
 
-    if (typeof file_JSON === 'object') {
-        log.create(`Requested path JSON loaded - Path: [${path}]`);
+    if (!Array.isArray(files))
+    {
+        log.create(`Failed to load requested path - Path: [${path}]`);
+    
+        res.send(files); // Error Code.
+        return;
     }
 
+    let json = files.map(f => {
+        return {
+            name: render.getFileName(f),
+            type: render.getFileType(f),
+            path: path + f
+        }
+    })
 
-    res.json(file_JSON);
+    log.create(`Requested path JSON loaded - Path: [${path}]`);
+
+    res.json(json);
 })
 
 
@@ -79,10 +92,6 @@ app.all(streamSection, (req, res) => {
 
     let file_type = render.getFileType(path),
         file_ext  = render.getFileExt(path);
-
-    if (file_ext == 'mp3')
-        file_ext = 'mpeg';
-
 
     let contentType = `${file_type}/${file_ext}`;
 

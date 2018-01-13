@@ -654,6 +654,50 @@ class AudioPlayer {
     }
 }
 
+class AP {
+    constructor() {
+
+        this.play = this.play.bind(this);
+        this.cache = this.cache.bind(this);
+        this.xhr = this.xhr.bind(this);
+    }
+
+    play(url) {
+        //
+    }
+
+    cache(url) {
+        let xhr = this.xhr();
+
+        return new Promise((resolve, reject) => {
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 200) {
+                        resolve(xhr.response);
+                    }
+                    else {
+                        reject(xhr.status);
+                    }
+                }
+            };
+    
+            xhr.open("GET", url, true);
+            xhr.send();
+        })
+        .then(res => {
+            //
+        },
+        err => {
+            //
+        });
+    }
+    
+    xhr()
+    {
+        return new XMLHttpRequest();
+    }
+}
+
 var audio = new AudioPlayer();
 
 
@@ -691,3 +735,4 @@ document.addEventListener('keypress', evt => {
 		audio.onPlayButtonClick();
 	}
 })
+
