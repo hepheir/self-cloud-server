@@ -123,7 +123,6 @@ function _render(SETTINGS, log)
     }
 
 
-
     function _getFileType(path)
     {
         // 1. Incase of directory.
@@ -139,13 +138,22 @@ function _render(SETTINGS, log)
             
             return extension;
         }
+        else {
+            extension = extension.toLowerCase();
+        }
+
 
         let sup_types = SETTINGS.supported_media_types;
 
         for (let type in sup_types) {
             for (let i = 0; i < sup_types[type].length; i++)
                 if (extension === sup_types[type][i])
-                    return type;
+                {
+                    if (extension === 'mp3')
+                        return 'mpeg';
+                    else
+                        return type;
+                }
         }
 
         return 'file';
@@ -153,42 +161,28 @@ function _render(SETTINGS, log)
 
 
     // Get JSON data of files in specified directory.
-    function _getJSON(path, id)
+    function _readDir(path)
     {
-        let Err = '';
-
-        if (id !== undefined)
-            Err += `User: [${id}]\t`;
-
         // E1. Check if path exists.
         if (!fs.existsSync(path))
         {
-            Err += `Requested path not found - Module: <render.js: _getJSON>, Path: [${path}]`;
-
-            log.create(Err);
+            log.create(`Requested path not found - Module: <render.js: _readDir()>, Path: [${path}]`);
             return 404;
         }
 
         // E2. Check if path is a directory.
         if (!fs.statSync(path).isDirectory())
         {
-            Err += `Requested path is not a directory - Module: <render.js: _getJSON()>, Path: [${path}]`;
-
-            log.create(Err);
+            log.create(`Requested path is not a directory - Module: <render.js: _readDir()>, Path: [${path}]`);
             return 400;
         }
 
 
         let files = fs.readdirSync(path).map(f => {
-            let _name = f;
-
             if (fs.statSync(path + f).isDirectory())
-                _name += '/';
-    
-            return {
-                name: _name,
-                type: _getFileType(path + _name)
-            };
+                f += '/';
+
+            return f;
         });
 
         return files;
@@ -201,7 +195,7 @@ function _render(SETTINGS, log)
         getFileExt: _getFileExt,
         getFileName: _getFileName,
         getFileType: _getFileType,
-        getJSON: _getJSON
+        readDir: _readDir
     }
 }
 

@@ -392,3 +392,60 @@ class Explorer {
 }
 
 var explorer = new Explorer();
+
+
+class _explorer {
+    constructor() {
+        this.open = this.open.bind(this);
+        this.load = this.load.bind(this);
+        this.xhr  = this.xhr.bind(this);
+    }
+
+    open(path)
+    {
+        this.load(path)
+            .then(json => {
+                json.forEach(file => {
+                    //
+                })
+            },
+            err => {
+                switch (err) {
+                    case 404:
+                        console.log('Requested path not found.');
+                        break;
+                
+                    default:
+                        break;
+                }
+            });
+    }
+
+    load(path)
+    {
+        let xhr = this.xhr();
+
+        return new Promise((resolve, reject) => {
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 200) {
+                        resolve(xhr.response);
+                    }
+                    else {
+                        reject(xhr.status);
+                    }
+                }
+            };
+    
+            xhr.open("GET", 'drive' + encodeURIComponent(path), true);
+            xhr.send();
+        });
+    }
+
+    
+
+    xhr()
+    {
+        return new XMLHttpRequest();
+    }
+}
