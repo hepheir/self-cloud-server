@@ -64,7 +64,7 @@ class Explorer {
                 name: filedata.name,
                 type: filedata.type,
                 secured: filedata.secured,
-                path: path + filedata.name,
+                path: filedata.path,
                 node: undefined,
         
                 title: {
@@ -186,9 +186,17 @@ class Explorer {
             this.openDir(filedata.path);
         }
         else if (filedata.type == 'audio' && audio !== undefined) {
-            audio.addToPlaylist(filedata.path, audio.status.playlist, audio.status.index + 1, () => {
-                audio.play(audio.status.index + 1);
-            });
+            // audio.addToPlaylist(filedata.path, audio.status.playlist, audio.status.index + 1, () => {
+            //     audio.play(audio.status.index + 1);
+            // });
+
+            try {
+                audio.stop();
+            }
+            catch (e) {
+                console.log(e);
+            }
+            audio.play(`${location.origin}/stream${filedata.path}`);
         }
         else if (confirm(`[${li.getAttribute('path')}] 다운 받으시겠습니까?`)) {
             location.assign(`/stream${li.getAttribute('path')}`);
