@@ -62,15 +62,17 @@ app.all(driveJsonSection, (req, res) =>
     {
         log.create(`Failed to load requested path - Path: [${path}]`);
     
-        res.send(files); // Error Code.
+        res.sendStatus(files); // Error Code.
         return;
     }
+
+    let renderPath = path.replace(ROOT_PATH, '/');
 
     let json = files.map(f => {
         return {
             name: render.getFileName(f),
             type: render.getFileType(f),
-            path: path + f
+            path: renderPath + f
         }
     })
 
@@ -135,8 +137,6 @@ app.all(streamSection, (req, res) => {
 
 app.listen(PORT, () => log.create(`Self-cloud-server listening on [${HOSTNAME}:${PORT}]!`));
 
-// app.listen(80, () => {
-//     log.create(`Listening to Secondary port [${HOSTNAME}:${80}]!`);
-// })
+app.listen(80, () => log.create(`Listening to Secondary port [${HOSTNAME}:80]!`));
 
 // ################################### //
