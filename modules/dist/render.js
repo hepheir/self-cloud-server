@@ -39,7 +39,7 @@ function _render(SETTINGS, log)
 
         files = files.map(f => f.toString('utf-8'));
         
-        content = files.join();
+        content = files.join('');
 
         return content;
     }
@@ -74,11 +74,11 @@ function _render(SETTINGS, log)
 
         if (file_ext === null)
             // 1-1. Incase of the path points a content of root dir.
-            file_ext = file_ext.match(/[^/]+$/);
+            file_ext = path.match(/[^/]+$/);
 
         if (file_ext === null) {
             // 1-E. Given path is not a valid file name.
-            log.create(`Not a valid path - Module: <render.js: _getFileExt>, Path: [${path}]`);
+            log.create(`Not a valid path - Module: <render.js: _getFileExt()>, Path: [${path}]`);
             return 400;
         }
         file_ext = file_ext[0];
@@ -101,23 +101,51 @@ function _render(SETTINGS, log)
 
     function _getFileName(path)
     {
+        if (path == null) {
+            // Err. Path should be given.
+            log.create(`Path is not specified. - Module: <render.js: _getFileName()>`);
+            return '';
+        }
+
+        // Check if path is a folder.
+        if (path.endsWith('/'))
+        {
+            // Get folder name.
+            
+            let folder_name;
+
+            folder_name = path.match(/[^/]+\/$/);
+            
+            if (folder_name === null) {
+                // Err. Unexpected Error.
+                log.create(`Cannot get folder name - Module: <render.js: _getFileName()>, Path: [${path}]`);
+                return '';
+            }
+
+            return folder_name[0];
+        }
+
+        // Get file name.
+
         let file_name;
 
-        // 1. Remove the last sub-folder's path.
         file_name = path.match(/\/[^/]+$/);
 
 
         if (file_name === null)
-            // 1-1. Incase of the path points a content of root dir.
-            file_name = file_name.match(/[^/]+$/);
+            // Incase of the path points a content of root dir.
+            file_name = path.match(/[^/]+$/);
 
-        file_name = file_name[0];
 
-        // 2. Remove extension.
-        file_name = file_name.replace(_getFileExt(path), '');
+        if (file_name === null) {
+            // Err. Unexpected Error.
+            log.create(`Cannot get file name - Module: <render.js: _getFileName()>, Path: [${path}]`);
+            return '';
+        }
 
-        // 3. Remove remaining slash.
-        file_name = file_name.replace('/', '');
+        // Remove extension and remaining slash.
+        file_name = file_name[0].replace('.' + _getFileExt(path), '')
+                                .replace('/', '');
 
         return file_name;
     }
@@ -149,10 +177,7 @@ function _render(SETTINGS, log)
             for (let i = 0; i < sup_types[type].length; i++)
                 if (extension === sup_types[type][i])
                 {
-                    if (extension === 'mp3')
-                        return 'mpeg';
-                    else
-                        return type;
+                    return type;
                 }
         }
 
