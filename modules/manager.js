@@ -73,7 +73,7 @@ module.exports.settings = _settings;
 
 module.exports.log = _log;
 module.exports.render = render(_settings, _log);
-module.exports.playlist = playlist(_settings, _log);
+// module.exports.playlist = playlist(_settings, _log);
 
 
 
