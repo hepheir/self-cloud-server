@@ -42,7 +42,7 @@ app.all('/', (req, res) => {
 let driveSection = /^\/drive\//;
 app.all(driveSection, (req, res) =>
 {
-    const content = render.getPage('explorer');
+    const content = render.getPage('explorer', 'test');
 
     log.create(`HTML page has rendered.`);
     res.send(content);
