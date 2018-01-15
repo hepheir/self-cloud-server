@@ -189,13 +189,7 @@ class Explorer {
             // audio.addToPlaylist(filedata.path, audio.status.playlist, audio.status.index + 1, () => {
             //     audio.play(audio.status.index + 1);
             // });
-
-            try {
-                audio.stop();
-            }
-            catch (e) {
-                console.log(e);
-            }
+            
             audio.play(`${location.origin}/stream${filedata.path}`);
         }
         else if (confirm(`[${li.getAttribute('path')}] 다운 받으시겠습니까?`)) {
