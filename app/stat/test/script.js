@@ -47,12 +47,19 @@ class AudioPlayer {
             start = current.start;
             end = current.end;
         }
-        else if (url != current.url)
+        else if (current != undefined && url != current.url)
         {
             this._addStack(url, start, end);
         }
 
         this._play(url, start, end);
+
+
+        // Prepare for the next audio.
+        let standby = this.playlist[1];
+        if (standby != undefined && this.cache[standby.url] == null) {
+            this._createCache(standby.url);
+        }
     }
 
     pause() {
@@ -78,16 +85,21 @@ class AudioPlayer {
 
         if (this.playlist.length == 1)
             this._play(url, start, end);
-
-        else if (this.playlist.length == 2 && this.cache[url] == null) {
-            this._createCache(url);
-        }
     }
 
     // Helpers
 
-    _play(url, start, end)
+    _play(url, start, end, callstack)
     {
+        // To prevent overlooping problem.
+        if (callstack != undefined && callstack > 32) {
+            delete this.cache[url];
+
+            alert(`Cannot download file (Maximum callstack: ${callstack}) - Url [${url}]`);
+            return;
+        }
+
+
         start = start == undefined ? 0 : start;
         end = end == undefined ? 86400 : end;
 
@@ -100,9 +112,13 @@ class AudioPlayer {
         // If not cached, cache anew.
         if (this.cache[url] == null) {
             this._createCache(url).then(
-                () => this._play(url, start, end),
+                () => this._play(url, start, end, 1),
                 err => console.log(`Cannot download file - Url [${url}]`)
             );
+            return;
+        }
+        else if (this.cache[url].audioBuffer == null) {
+            setTimeout(() => this._play(url, start, end, callstack++), 200);
             return;
         }
 
@@ -181,6 +197,8 @@ class AudioPlayer {
     {
         let xhr = this._xhr();
 
+        this.cache[url] = new Object();
+
         return new Promise((resolve, reject) => {
             xhr.onreadystatechange = () => {
                 if (xhr.readyState == 4)
@@ -202,10 +220,9 @@ class AudioPlayer {
             arrayBuffer => new Promise((resolve, reject) => {
                 this.player.decodeAudioData(arrayBuffer,
                     audioBuffer => {
-                        this.cache[url] = new Object();
                         this.cache[url].audioBuffer = audioBuffer;
     
-                        console.log(`Successfully created AudioBuffer: `, audioBuffer);
+                        console.log(`Successfully created AudioBuffer - Url: [${url}]`, audioBuffer);
 
                         resolve();
                     },
@@ -241,6 +258,16 @@ var audio = new AudioPlayer();
 
 
 let list = [
+    {
+        url: `${location.origin}/stream/1) Music/11) 멜론 구매곡/Alan Walker-01-Fade.mp3`,
+        start: undefined,
+        end: 21.3
+    },
+    {
+        url: `${location.origin}/stream/1) Music/11) 멜론 구매곡/16-12 D/찬열 (CHANYEOL)-01-Stay With Me.mp3`,
+        start: undefined,
+        end: 29.4
+    },
     {
         url: `${location.origin}/stream/1) Music/11) 멜론 구매곡/17-12, 18-1 D/자우림-04-낙화(落花).mp3`,
         start: 85.8,
