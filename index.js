@@ -84,6 +84,12 @@ app.all(driveJsonSection, (req, res) =>
 
 let streamSection = /^\/stream\//;
 app.all(streamSection, (req, res) => {
+
+    /// IMPORTANT!!
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With");
+
+
     var path = render.getPath(req, streamSection);
 
     if (!fs.existsSync(path)) {
@@ -137,6 +143,6 @@ app.all(streamSection, (req, res) => {
 
 app.listen(PORT, () => log.create(`Self-cloud-server listening on [${HOSTNAME}:${PORT}]!`));
 
-app.listen(80, () => log.create(`Listening to Secondary port [${HOSTNAME}:80]!`));
+// app.listen(80, () => log.create(`Listening to Secondary port [${HOSTNAME}:80]!`));
 
 // ################################### //
