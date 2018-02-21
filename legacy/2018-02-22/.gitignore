@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 data/log.txt
 
 test.js
@@ -9,6 +10,8 @@ data/Database-playlist.json
 data/playlist.json
 settings.json
 
+=======
+>>>>>>> 5e199ac (Keeping 2018-01-16)
 package-lock.json
 
 # Logs
