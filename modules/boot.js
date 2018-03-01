@@ -69,3 +69,4 @@ var settings = (function()
     }
 })();
 
+exports.settings = settings;
