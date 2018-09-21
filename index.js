@@ -2,14 +2,12 @@
 
 const PORT = 80;
 
-// ################################### //
 
 'use strict';
 
 const fs = require('fs');
 const express = require('express');
 
-// ################################### //
 
 const app = app_create();
 
@@ -20,7 +18,6 @@ function _main_() {
     app_listen();
 }
 
-// ################################### //
 
 function app_create() {
     let app;
@@ -37,8 +34,6 @@ function app_listen() {
     });
 }
 
-// ################################### //
-
 function router_renderUI(req, res) {
     // Not Prepared Yet.
 }
@@ -51,7 +46,5 @@ function router_readDir(req, res) {
 
     res.send(content);
 }
-
-// ################################### //
 
 _main_();
