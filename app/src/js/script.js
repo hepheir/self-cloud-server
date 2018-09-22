@@ -1,4 +1,4 @@
-let req_path = '1) Music/11) 멜론 구매곡';
+let req_path = '';
 
 
 let xhr = new XMLHttpRequest();
