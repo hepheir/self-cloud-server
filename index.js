@@ -37,7 +37,12 @@ function app_listen() {
 }
 
 function router_renderUI(req, res) {
-    //
+    let content;
+
+    content = fs.readFileSync('app/src/html/index.html');
+    content = content.toString('utf-8');
+
+    res.send(content);
 }
 
 function router_readDir(req, res) {
