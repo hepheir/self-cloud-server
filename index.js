@@ -13,7 +13,7 @@ const express = require('express');
 const app = app_create();
 
 function _main_() {
-    app.get(/.*/,  router_renderUI);
+    app.get('/',  router_renderUI);
     app.post('/path/*', router_readDir);
     app.post('/file/*', router_readDir);
 
