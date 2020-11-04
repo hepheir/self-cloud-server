@@ -1,0 +1,8 @@
+# Virtual Environment
+.env
+node_modules
+package-lock.json
+
+# User Configuration
+config.yaml
+config.yml
