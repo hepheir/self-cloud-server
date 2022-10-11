@@ -9,6 +9,8 @@ data/Database-playlist.json
 data/playlist.json
 settings.json
 
+package-lock.json
+
 # Logs
 logs
 *.log
