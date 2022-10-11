@@ -1,0 +1,26 @@
+{
+  "name": "self-cloud-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "cookie-parser": "^1.4.3",
+    "express": "^4.15.4",
+    "handlebars": "^4.0.10",
+    "node-id3": "^0.0.10"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hepheir/self-cloud-server.git"
+  },
+  "author": "Hepheir <hepheir@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Hepheir/self-cloud-server/issues"
+  },
+  "homepage": "https://github.com/Hepheir/self-cloud-server#readme"
+}
