@@ -4,9 +4,7 @@
         "port": 3000
     },
     "path": {
-        // Mac: '/Volumes/Hepheir/Database'
-        // Win: 'G:/Database'
-        "root": "/Volumes/USB-4GB/",
+        "root": "/",
         "log": "./log.txt"
     }
 }
