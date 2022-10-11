@@ -2,102 +2,169 @@
 
 'use strict';
 
-
 // ################################### //
-/* Custom Modules */
+
+// Custom Modules
+
 const observer = require('./modules/observer.js');
 
-const log = observer.log;
-const playlist = observer.playlist;
+const log   = observer.log
+    , pl    = observer.playlist
+    , timer = observer.timer;
 
 const HOSTNAME  = observer.settings.server.hostname
     , PORT      = observer.settings.server.port
     , ROOT_PATH = observer.settings.path.root;
 
-/* Node Modules */
-const express = require('express')
-    , fs = require('fs')
-    , handlebars = require('handlebars')
-    , cookieParser = require('cookie-parser')
-    , nodeID3 = require('node-id3');
+const SUPPORTED_MEDIA_TYPES = observer.settings.supported_media_types;
+
+// NPM Modules
+
+const fs = require('fs')
+    , express = require('express')
+    , cookieParser = require('cookie-parser');
+
+// Express.js setting
 
 const app = express();
 app.use(cookieParser());
-app.use(express.static('frontend/app'));
+app.use(express.static('app'));
 
-handlebars.registerHelper('ifNotEq', function (a, b, opts) {
-    if (a !== b) {
-        return opts.fn(this);
-    }
-});
-handlebars.registerHelper('ifEq', function (a, b, opts) {
-    if (a === b) {
-        return opts.fn(this);
-    }
-});
 
 // ################################### //
-/* drive */
-let driveSection = /^\/drive(\/[^/]*)*$/;
+
+// Routers
+
+app.all('/', (req, res) => {
+    res.send('<script>location.replace("./drive/");</script>');
+})
+
+// Render Pages
+let driveSection = /^\/drive\//;
 app.all(driveSection, (req, res) => {
-    var path = ROOT_PATH + decodeURIComponent(req.path.replace('/drive/', ''));
-
-    let client = req.cookies.client_id;
-
-    if (!client || client == 'null') {
-        client = 'guest';
-    }
-
-    if (!fs.existsSync(path)) {
-        res.send(renderPage('error', undefined));
-        return;
-    }
-
-    if (path.match('CENSORED')) {
-        log.create(`{${req.ip}} <${client}> tried access to [${path}]!`);
-        if (client != 'level7password') {
-            res.send('no Access');
-            return;
-        }
-    }
-    log.create(`{${req.ip}} <${client}> access to [${path}]!`);
-
-    // Level ACCESS
-    req.type = fileType(path);
-
-    if (req.type != 'folder') {
-        res.send(renderPage('file', undefined));
-        return;
-    }
-
-    let content,
-        source = new Object();
-
-    let files = readDirJSON(path);
-    if ('json' in req.query) {
-        content = JSON.stringify(files);
-        source = undefined;
-
-        res.setHeader('Access-Control-Allow-Headers', '*');
-    } else {
-        source.files = files;
-        content = renderPage('drive', source);
-    }
+    log.create(`<${req.ip}> Rendering UI for client.`);
     
+    var path = getPath(req.path.replace(driveSection, ''));
 
-    res.send(content);
+    let files = [
+        fs.readFileSync('app/header.partial.html'),
+        fs.readFileSync(`app/stat/explorer/index.html`),
+        fs.readFileSync(`app/stat/audio-player/index.html`),
+        fs.readFileSync('app/footer.partial.html')
+    ]
+
+    Promise.all(files)
+        .then(files => files = files.map(f => f = f.toString('utf-8')))
+        .then(files => {
+            const content = files.join('');
+
+            res.send(content);
+        })
 })
 
 
-let streamSection = /^\/stream(\/[^/]*)*$/;
+// Render JSON data of a directory.
+let driveJsonSection = /^\/json\//;
+app.all(driveJsonSection, (req, res) => {
+    var path = getPath(req.path.replace(driveJsonSection, ''));
+
+    // Error handler
+    if (!fs.existsSync(path)) {
+        res.json({error: 'not found!'});
+        return;
+
+    } else if (!fs.statSync(path).isDirectory()) {
+        res.json({error: 'not a directory!'});
+        return;
+    }
+    
+
+    timer.start('loading!');
+
+    // Parse directory data into useful form.
+    let files = fs.readdirSync(path).map(f => {
+        let source = {
+            name: f,
+            type: fileType(path + f),
+            secured: false // not yet.
+        }
+
+        if (source.type == 'folder') {
+            source.name += '/';
+        }
+
+        return source;
+    });
+
+    // Temporal action to prevent mac OS hidden files from appearing. + and unwanted files.
+    files = files.filter(f => {
+        return !f.name.includes('._') && !f.name.includes('CENSORED');
+    })
+    
+
+    res.json(files);
+    
+    // Time time time
+    let speed = timer.end('finished loading');
+    log.create(`<${req.ip}> accessed to [${path}], JSON rendering took ${speed} ms.`);
+})
+
+
+let playlistSection = /^\/playlist\//;
+app.all(playlistSection, (req, res) => {
+    let params = req.path.replace(playlistSection, '').split('/');
+
+    // 1. Get user data from path string. >> /playlist/:userID/:playlistID/
+    let clientID = params[0],
+        playlistID = params[1];
+
+    // 2. is save mode?
+    if ('save' in req.query) {
+        let playlist = new Array();
+
+        // 2-1. Each value has path string that is encoded by encodeURIcompoent().
+        for (let key in req.query) {
+            if (key == 'save') {
+                continue
+            }
+            playlist.push(decodeURIComponent(req.query[key]));
+        }
+
+        // 2-2. Save the playlist using custom module.
+        pl.setPlaylist(clientID, playlistID, playlist);
+    
+    // 3. Record what's going on.
+        log.create(`<${req.ip}> (${clientID}) saved playlist (${playlistID}).`);
+    } else {
+        log.create(`<${req.ip}> (${clientID}) downloaded playlist (${playlistID}).`);
+    }
+
+    // 4. Get the playlist using custom module.
+    let content = pl.getPlaylist(clientID, playlistID);
+
+    res.json(content);
+})
+
+let streamSection = /^\/stream\//;
 app.all(streamSection, (req, res) => {
-    var path = ROOT_PATH + decodeURIComponent(req.path.replace('/stream/', ''));
+    var path = getPath(req.path.replace(streamSection, ''));
 
     if (!fs.existsSync(path)) {
         console.log('404: stream: ', path);
         res.send(null);
         return;
     }
+
+    log.create(`<${req.ip}> downloaded [${path}]`);
+
+    let filetype = fileType(path),
+        extension = path.match(/[^.]+$/)[0];
+
+    if (extension == 'mp3') {
+        extension = 'mpeg';
+    }
+
+    let contentType = `${filetype}/${extension}`;
 
     // Level ACCESS
     const stat = fs.statSync(path);
@@ -116,14 +183,14 @@ app.all(streamSection, (req, res) => {
             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
             'Accept-Ranges': 'bytes',
             'Content-Length': chunksize,
-            'Content-Type': 'video/mp4',
+            'Content-Type': contentType,
         }
         res.writeHead(206, head);
         file.pipe(res);
     } else {
         const head = {
             'Content-Length': fileSize,
-            'Content-Type': 'video/mp4',
+            'Content-Type': contentType,
         }
         res.writeHead(200, head)
         fs.createReadStream(path).pipe(res)
@@ -131,133 +198,26 @@ app.all(streamSection, (req, res) => {
 })
 
 
-let playlistSection = /^\/playlist(\/[^/]*)*$/;
-app.all(playlistSection, (req, res) => {
-    let client = req.cookies.client_id;
+// ################################### //
 
-    if (!client || client == 'null') {
-        client = 'guest';
-    }
+// Launch Server!
 
-    if ('save' in req.query) {
-        let pl_save = new Array();
-
-        for (let url in req.query) {
-            if (url == 'save') {
-                continue;
-
-            } else {
-                pl_save.push(url);
-            }
-        }
-        playlist.setPlaylist(client, pl_save);
-
-        res.send();
-        return;
-    }
-
-    let pl_load = playlist.getPlaylist(client);
-
-    pl_load = JSON.stringify(pl_load);
-    res.setHeader('Content-Type', 'application/json');
-    res.send(pl_load);
-})
-
-
-let mp3tagSection = /^\/mp3(\/[^/]*)*$/;
-app.all(mp3tagSection, (req, res) => {
-    var path = ROOT_PATH + decodeURIComponent(req.path.replace('/mp3/', ''));
-
-    let tags = nodeID3.read(path);
-
-    let content = new Object();
-
-    content.title = tags.title;
-    content.artist = tags.artist || tags.composer || tags.album;
-    content.src = decodeURIComponent(req.path.replace('/mp3/', '/stream/'));
-
-    res.send(content);
-})
-
-
-app.all('/', (req, res) => {
-    res.send('<script>location.replace("./drive/");</script>');
-})
-
-// disable HOST NAME
-app.listen(PORT, () => {
+app.listen(80, () => {
     log.create(`\nSet root directory [${ROOT_PATH}]\nSelf-cloud-server listening on [${HOSTNAME}:${PORT}]!`);
 })
 
 
 // ################################### //
 
-/**
- * Create a html document.
- * 
- * @param {string} type 
- * @param {!CompileOptions} source 
- * @return {HTMLDocument}
- */
-function renderPage(type, source) {
-    if (!type) {
-        return false;
-    }
+// Functions
 
-    let files = [
-        fs.readFileSync('frontend/header.partial.html'),
-        fs.readFileSync(`frontend/${type}/index.html`),
-        fs.readFileSync('frontend/footer.partial.html')
-    ];
-
-    files = files.map(f => f.toString('utf-8'));
-    files = files.join('');
-
-    return handlebars.compile(files)(source);
-}
-
-/**
- * Read a directory and returns an array of JSON data.
- * 
- * @param {String} path 
- * @return {[{name: String, type: String, secured: Boolean}]}
- */
-function readDirJSON(path) {
-    path += '/';
+function getPath(path) {
+    path = ROOT_PATH + decodeURIComponent(path);
     path = path.replace('//', '/');
-
-    if (!fs.existsSync(path)) {
-        return null;
-    }
-
-    let files = fs.readdirSync(path),
-        file_id = 1;
-
-    files = files.map(file => {
-        let type = fileType(path + file);
-        
-        if (type === 'folder') {
-            file += '/';
-        }
-
-        return {
-            id: 'file_' + file_id++,
-            name: file,
-            type: type,
-            secured: (file.match('CENSORED') != null)
-        };
-    })
-    return files;
+    return path;
 }
 
 
-// Supported Media Types
-const SUPPORTED_MEDIA_TYPES = {
-    audio: ['mp3', 'ogg', 'wav'],
-    video: ['mp4', 'webm', 'ogg'],
-    //text : ['txt'],
-    code : ['c', 'cp', 'cpp', 'python', 'js', 'html', 'css']
-};
 
 /**
  * Return the type of a file.

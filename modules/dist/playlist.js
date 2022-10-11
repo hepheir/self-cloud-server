@@ -2,49 +2,103 @@
 
 const fs = require('fs');
 
-const PLAYLIST_PATH = 'playlist.json';
-
+/**
+ *  PLAYLIST = {
+ *      name: {
+ *          playlist1 : ['src1', 'src2', ...],
+ *          .
+ *          .
+ *          .
+ *      },
+ *      .
+ *      .
+ *      .
+ *  }
+ */
 var PLAYLIST;
 
-if (!fs.existsSync(PLAYLIST_PATH)) {
-    fs.closeSync(fs.openSync(PLAYLIST_PATH, 'w'));
-    fs.writeFileSync(PLAYLIST_PATH, '{}');
-}
+// Path
 
-loadPlaylist();
+var PLAYLIST_PATH;
+
+// Module
+
+module.exports.setPlaylistPath = setPlaylistPath; // Initializer
+
+module.exports.getPlaylist = getPlaylist;
+module.exports.setPlaylist = setPlaylist;
+module.exports.getAllPlaylists = getAllPlaylists;
+
 
 // FUNCTIONS
 
-function savePlaylist(json) {
-    fs.writeFileSync(PLAYLIST_PATH, JSON.stringify(json));
-}
+function setPlaylistPath(path) {
+    PLAYLIST_PATH = path;
+    
+    // If playlist.json does not exist, create one!
+    if (!fs.existsSync(PLAYLIST_PATH)) {
+        fs.closeSync(fs.openSync(PLAYLIST_PATH, 'w'));
+        fs.writeFileSync(PLAYLIST_PATH, '{}');
+    }
 
-function loadPlaylist(json) {
     PLAYLIST = JSON.parse(fs.readFileSync(PLAYLIST_PATH, 'utf8'));
 }
 
 /**
- * 
- * @param {string} client 
- * @param {[String]} playlist 
+ * returns an Array of source paths.
+ * if requested playlist doesn't exist, returns null.
+ * @param {String} clientID 
+ * @param {String} playlistID 
+ * @return {Array|null}
  */
-function setPlaylist(client, playlist) {
-    PLAYLIST[client] = playlist;
-
-    savePlaylist(PLAYLIST);
-    console.log(PLAYLIST);
-}
-
-function getPlaylist(client) {
-    if (!PLAYLIST[client]) {
-        console.log(`Client: [${client}] not found.`);
-        return [];
+function getPlaylist(clientID, playlistID) {
+    if (!PLAYLIST[clientID]) {
+        PLAYLIST[clientID] = new Object();
+        return null;
     }
 
-    return PLAYLIST[client];
+    if (!PLAYLIST[clientID][playlistID]) {
+        return null;
+    }
+
+    return PLAYLIST[clientID][playlistID];
 }
 
-// Module
+/**
+ * Sets a playlist with given id and list
+ * @param {String} clientID 
+ * @param {String} playlistID 
+ * @param {Array} playlist 
+ */
+function setPlaylist(clientID, playlistID, playlist) {
+    if (!PLAYLIST[clientID]) {
+        PLAYLIST[clientID] = new Object();
+    }
 
-module.exports.setPlaylist = setPlaylist;
-module.exports.getPlaylist = getPlaylist;
+    PLAYLIST[clientID][playlistID] = playlist;
+
+    // Update [playlist.json] asynchronously.
+    new Promise((resolve, reject) => {
+        fs.writeFileSync(PLAYLIST_PATH, JSON.stringify(PLAYLIST));
+    })
+}
+
+/**
+ * returns an Array of user's playlists.
+ * if requested playlist doesn't exist, returns null.
+ * @param {String} clientID
+ * @return {Array|null}
+ */
+function getAllPlaylists(clientID) {
+    if (!Playlist[clientID]) {
+        return null;
+    }
+
+    let userPlaylists = new Array();
+
+    for (let playlistID in PLAYLIST) {
+        userPlaylists.push(playlistID);
+    }
+
+    return userPlaylists;
+}

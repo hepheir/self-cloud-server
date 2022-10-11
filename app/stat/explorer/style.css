@@ -1,0 +1,97 @@
+:root {
+    --shadow: rgba(0, 0, 0, .16);
+
+    --button-hover: rgba(0, 0, 0, .16);
+
+    --border-color: rgba(0, 0, 0, .10);
+
+    --primary-color: rgba(0, 0, 0, .87);
+    --secondary-color: rgba(0, 0, 0, .56);
+
+    --primary-background-color: #FFFFFF;
+    --secondary-background-color: #F5F5F5;
+}
+
+.body-layout {
+    width: 100%;
+    height: 100%;
+    
+    overflow: auto;
+}
+
+.explorer-list {
+    width: 100%;
+    height: auto;
+}
+.explorer-list.folder {padding-top: 16px;}
+.explorer-list.file   {padding-bottom: 120px;}
+
+.explorer-item {
+    width: 100%;
+    height: 48px;
+    border-bottom: 1px solid var(--border-color);
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    background-color: var(--primary-background-color);
+}
+
+.explorer-item .primary-button {
+    width: 32px;
+    height: 32px;
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 4px;
+
+    display: block;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+[select-mode="false"] .explorer-item .primary-button {pointer-events: none;}
+
+.explorer-item .title {
+    width: 100%;
+
+    flex-grow: 1;
+    flex-shrink: 1;
+
+    font-size: 14px;
+    line-height: 1.2;
+
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    cursor: pointer;
+}
+.explorer-item .title:hover {
+    text-decoration: underline;
+}
+
+.explorer-item .secondary-button {
+    width: 32px;
+    height: 32px;
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 4px;
+    
+    display: block;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.explorer-item svg {fill: var(--secondary-color)};
+
+
+.explorer-item .secondary-button {
+    opacity: 0;
+    pointer-events: none;
+}
+.explorer-item[type="audio"] .secondary-button {
+    opacity: 1;
+    pointer-events: all;
+}

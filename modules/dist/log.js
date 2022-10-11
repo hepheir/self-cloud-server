@@ -1,16 +1,26 @@
 'use strict';
 
-const fs = require('fs')
-    , date = new Date();
+const fs = require('fs');
 
-/**
- * History log for server management & maintenance.
- * @param {String} path 
- */
-function LOG(path) {
-    this.LOG_PATH = path;
-    this.lastestLog = '';
+var LASTEST_LOG = '';
 
+// Path
+
+var LOG_PATH;
+
+// Module
+
+module.exports.setLogPath = setLogPath; // Initializer
+
+module.exports.create = create;
+
+
+// FUNCTIONS
+
+function setLogPath(path) {
+    let date = new Date();
+    LOG_PATH = path;
+    
     if (!fs.existsSync(path)) {
         // Create a new log file.
         fs.closeSync(fs.openSync(path, 'w'));
@@ -21,23 +31,23 @@ function LOG(path) {
 }
 
 /**
- * Create a log and record the message on the specified file.
- * @param {String} msg 
+ * Create a log record of the message.
+ * @param {String} message 
  */
-LOG.prototype.create = function(msg) {
-    let history = fs.readFileSync(this.LOG_PATH),
-        newLog;
+function create(message) {
+    let history  = fs.readFileSync(LOG_PATH),
+        addition;
 
-    if (this.lastestLog === msg) {
-        newLog = '*';
+    if (LASTEST_LOG === message) {
+        addition = '*';
 
     } else {
-        console.log(msg);
-        this.lastestLog = newLog;
-        
-        newLog = `\n[${date.toLocaleString()}] ${msg}`;
-    }
-    fs.writeFileSync(this.LOG_PATH, history + newLog);
-}
+        let date = new Date();
+        addition = `\n[${date.toLocaleString()}] ${message} `;
 
-module.exports = LOG;
+        console.log(message);
+        LASTEST_LOG = message;
+    }
+
+    fs.writeFileSync(LOG_PATH, history + addition);
+}
