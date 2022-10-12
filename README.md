@@ -3,9 +3,10 @@
 ![](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white)
 
 -   참여자: 김동주 <<hepheir@gmail.com>>
--   기간: 2016-10-05[^date-started] ~
+-   기간: 2016-10-05[^date-started] ~ 2020-11-04[^date-ended]
 
 [^date-started]: 본 서비스의 가장 오래된 배포 흔적을 이 날짜에 지인과의 카카오톡 대화 내용에서 확인함. 실제 개발기간을 고려하면 프로젝트 시작일은 더 이전일 것으로 추정됨.
+[^date-ended]: 2e9fb483f83d044b1311eb265dadc36f51d68199 커밋을 기준으로 작성함.
 
 # Summary
 
